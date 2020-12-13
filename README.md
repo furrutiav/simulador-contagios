@@ -8,3 +8,8 @@ numpy     # operación con vectores y matrices
 pillow    # procesamiento de imágenes
 scipy     # softwer para matematica, ciencia e ingenieria
 ```
+### Controles
+...
+```bash
+distancia social  # swap active Key S
+```
