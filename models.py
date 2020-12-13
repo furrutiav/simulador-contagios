@@ -2,6 +2,7 @@
 F. Urrutia V., CC3501, 2020-1
 -----------> MODELS <-----------
 Modelos:
+Builder, Person, Population
 """
 
 from libs import basic_shapes as bs, transformations as tr, easy_shaders as es, scene_graph as sg
@@ -11,6 +12,8 @@ import random as rd
 from scipy.stats import bernoulli
 from scipy.spatial import distance
 from typing import Union
+
+c = 0
 
 
 class Builder(object):
@@ -34,9 +37,10 @@ class Builder(object):
 class Person(object):
     parameters = {
         "status": {"sano": 0, "infectado": 1, "muerto": 2},
-        "prob_inf": 0.5,
+        "prob_inf": 0.2 / 100,
         "ratio": 0.1,
-        "radius": 0.1
+        "radius": 0.1,
+        "death_rate": 0.1 / 100
     }
 
     def __init__(self, builder):
@@ -58,30 +62,51 @@ class Person(object):
         sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
 
     def update_pos(self):
-        self.log_pos = tuple([np.random.normal(0, 0.003) + self.log_pos[i] for i in range(2)])
+        new_pos = tuple([np.random.normal(0, 0.003) + self.log_pos[i] for i in range(2)])
+        if -1 <= new_pos[0] <= 1 and -1 <= new_pos[1] <= 1:
+            self.log_pos = new_pos
         self.model.transform = tr.matmul([
             tr.translate(self.log_pos[0], self.log_pos[1], 0),
             tr.uniformScale(1/50)
         ])
 
     def update_status(self, other=None, active=False):
-        self.social_distance(other, active)
+        self.death()
+        if other:
+            self.infect(other)
         self.model.childs = [self.builder.get_graph()[self.status]]
 
+    def infect(self, other):
+        if other:
+            dif = np.subtract(self.log_pos, other.log_pos)
+            d = np.linalg.norm(dif)
+            r = self.parameters["radius"]
+            if d < r:
+                self.status = bernoulli.rvs(self.parameters["prob_inf"])
+
     def social_distance(self, other, active):
-        if not active:
+        if active:
             if other:
-                d = distance.euclidean(self.log_pos, other.log_pos)
-                if d < self.parameters["radius"]:
-                    self.status = bernoulli.rvs(self.parameters["prob_inf"])
+                dif = np.subtract(self.log_pos, other.log_pos)
+                d = np.linalg.norm(dif)
+                dir = dif / d if d > 0 else (0, 0)
+                r = self.parameters["radius"]
+                if d < 1.5*r:
+                    self.log_pos = tuple([0.01*dir[i] + self.log_pos[i] for i in range(2)])
+
+    def death(self):
+        if self.status == 1:
+            self.status = 1+bernoulli.rvs(self.parameters["death_rate"])
 
 
 class Population(object):
 
-    def __init__(self, builder, size):
+    def __init__(self, builder, size, social_distance=False):
+        self.social_distance = social_distance
         self.people = []
         self.s_people = []
         self.i_people = []
+        self.d_people = []
         for k in range(size):
             person_k = Person(builder)
             if person_k.status:
@@ -95,17 +120,31 @@ class Population(object):
             person.draw(pipeline)
 
     def update(self):
+        global c
         for i_person in self.i_people:
             i_person.update_pos()
+            i_person.update_status()
+            if i_person.status-1:
+                self.d_people += [i_person]
+                self.i_people.remove(i_person)
+                print('F')
 
         for s_person in self.s_people:
             for i_person in self.i_people:
+                s_person.social_distance(i_person, self.social_distance)
                 s_person.update_status(i_person)
                 if s_person.status:
                     self.i_people += [s_person]
                     self.s_people.remove(s_person)
+                    print('+1 pal gulag')
                     break
+            for s2_person in self.s_people:
+                s_person.social_distance(s2_person, self.social_distance)
+
             s_person.update_pos()
+        print(f'healthy: {len(self.s_people)}, infected: {len(self.i_people)}, dead: {len(self.d_people)}') \
+            if not c % 100 else None
+        c += 1
 
 
 class Background(object):

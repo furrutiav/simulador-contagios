@@ -5,6 +5,7 @@ F. Urrutia V., CC3501, 2020-1
 """
 import glfw
 import sys
+import imgui
 from models import *
 from controller import Controller
 
@@ -31,7 +32,7 @@ if __name__ == '__main__':
     pipeline_tx_2d = es.SimpleTextureTransformShaderProgram()
     pipeline_pol_2d = es.SimpleTransformShaderProgram()
 
-    glClearColor(145 / 255, 163 / 255, 176 / 155, 1.0)
+    glClearColor(15 / 255, 33 / 255, 26 / 105, 1.0)
 
     # glEnable(GL_DEPTH_TEST)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
