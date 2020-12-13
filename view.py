@@ -13,7 +13,8 @@ if __name__ == '__main__':
     if not glfw.init():
         sys.exit()
 
-    width, height = 600, 600
+    width, height = 900, 900
+    # second_monitor = glfw.get_monitors()[1]
     window = glfw.create_window(
         width, height, 'Simulador Contagios; Autor: F. Urrutia V.', None, None)
 
@@ -30,7 +31,7 @@ if __name__ == '__main__':
     pipeline_tx_2d = es.SimpleTextureTransformShaderProgram()
     pipeline_pol_2d = es.SimpleTransformShaderProgram()
 
-    glClearColor(8 / 255, 8 / 255, 8 / 255, 1.0)
+    glClearColor(145 / 255, 163 / 255, 176 / 155, 1.0)
 
     # glEnable(GL_DEPTH_TEST)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
@@ -38,14 +39,16 @@ if __name__ == '__main__':
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     b = Builder()
-    p1 = Person(b)
+    p = Population(b, 100)
 
     while not glfw.window_should_close(window):
         glfw.poll_events()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        p1.draw(pipeline_pol_2d)
+        p.update()
+
+        p.draw(pipeline_pol_2d)
 
         glfw.swap_buffers(window)
 
