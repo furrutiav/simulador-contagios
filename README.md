@@ -6,7 +6,7 @@ glfw      # librería OpenGL
 pyopengl  # OpenGL para python
 numpy     # operación con vectores y matrices
 pillow    # procesamiento de imágenes
-scipy     # softwer para matematica, ciencia e ingenieria
+scipy     # software para matematica, ciencia e ingenieria
 ```
 ### Controles
 ...
