@@ -12,11 +12,18 @@ import sys
 
 class Controller(object):
     def __init__(self):
+        self.population: Population
         pass
 
     def on_key(self, window, key, scancode, action, mods):
         if not (action == glfw.PRESS):
             return
+        if key == glfw.KEY_S:
+            self.population.social_distance = not self.population.social_distance
 
         if key == glfw.KEY_SPACE:
             pass
+
+    def set_population(self, population):
+        self.population = population
+

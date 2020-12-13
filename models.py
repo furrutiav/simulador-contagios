@@ -38,13 +38,14 @@ class Person(object):
     parameters = {
         "status": {"sano": 0, "infectado": 1, "muerto": 2},
         "prob_inf": 0.2 / 100,
-        "ratio": 0.1,
-        "radius": 0.1,
+        "ratio": 0.2,
+        "radius": 0.05,
         "death_rate": 0.1 / 100
     }
 
     def __init__(self, builder):
-        self.log_pos = np.random.uniform(1, -1), np.random.uniform(1, -1)
+        self.log_pos = tuple([[np.random.uniform(1, -1) for _ in range(2)],
+                              [np.random.normal(0, 0.2) for _ in range(2)]][1])
         self.status = bernoulli.rvs(self.parameters["ratio"])   # self.parameters["status"]["status"]
         self.builder = builder
 
@@ -62,7 +63,11 @@ class Person(object):
         sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
 
     def update_pos(self):
-        new_pos = tuple([np.random.normal(0, 0.003) + self.log_pos[i] for i in range(2)])
+        global c
+        alpha = 0.05
+        flow = np.cos(-c*alpha), np.sin(-c*alpha)
+        new_pos = tuple([[np.random.normal(0, 0.003) + self.log_pos[i] for i in range(2)],
+                         [np.random.normal(0.001*flow[i], 0.005) + self.log_pos[i] for i in range(2)]][1])
         if -1 <= new_pos[0] <= 1 and -1 <= new_pos[1] <= 1:
             self.log_pos = new_pos
         self.model.transform = tr.matmul([
@@ -142,7 +147,7 @@ class Population(object):
                 s_person.social_distance(s2_person, self.social_distance)
 
             s_person.update_pos()
-        print(f'healthy: {len(self.s_people)}, infected: {len(self.i_people)}, dead: {len(self.d_people)}') \
+        print(f'sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}') \
             if not c % 100 else None
         c += 1
 

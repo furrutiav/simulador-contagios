@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     b = Builder()
     p = Population(b, 100)
-
+    controller.set_population(p)
     while not glfw.window_should_close(window):
         glfw.poll_events()
 
