@@ -67,7 +67,7 @@ class Person(object):
         alpha = 0.05
         flow = np.cos(-c*alpha), np.sin(-c*alpha)
         new_pos = tuple([[np.random.normal(0, 0.003) + self.log_pos[i] for i in range(2)],
-                         [np.random.normal(0.001*flow[i], 0.005) + self.log_pos[i] for i in range(2)]][1])
+                         [np.random.normal(0.003*flow[i], 0.005) + self.log_pos[i] for i in range(2)]][1])
         if -1 <= new_pos[0] <= 1 and -1 <= new_pos[1] <= 1:
             self.log_pos = new_pos
         self.model.transform = tr.matmul([
@@ -75,29 +75,27 @@ class Person(object):
             tr.uniformScale(1/50)
         ])
 
-    def update_status(self, other=None, active=False):
+    def update_status(self, other=None, dif=0):
         self.death()
         if other:
-            self.infect(other)
+            self.infect(other, dif)
         self.model.childs = [self.builder.get_graph()[self.status]]
 
-    def infect(self, other):
+    def infect(self, other, dif):
         if other:
-            dif = np.subtract(self.log_pos, other.log_pos)
             d = np.linalg.norm(dif)
             r = self.parameters["radius"]
             if d < r:
                 self.status = bernoulli.rvs(self.parameters["prob_inf"])
 
-    def social_distance(self, other, active):
+    def social_distance(self, other, active, dif):
         if active:
             if other:
-                dif = np.subtract(self.log_pos, other.log_pos)
                 d = np.linalg.norm(dif)
-                dir = dif / d if d > 0 else (0, 0)
+                s = dif / d if d > 0 else (0, 0)
                 r = self.parameters["radius"]
                 if d < 1.5*r:
-                    self.log_pos = tuple([0.01*dir[i] + self.log_pos[i] for i in range(2)])
+                    self.log_pos = tuple([0.01*s[i] + self.log_pos[i] for i in range(2)])
 
     def death(self):
         if self.status == 1:
@@ -132,19 +130,22 @@ class Population(object):
             if i_person.status-1:
                 self.d_people += [i_person]
                 self.i_people.remove(i_person)
-                print('F')
+                print('+1 muerto')
 
         for s_person in self.s_people:
+            active = self.social_distance
             for i_person in self.i_people:
-                s_person.social_distance(i_person, self.social_distance)
-                s_person.update_status(i_person)
+                dif = np.subtract(s_person.log_pos, i_person.log_pos)
+                s_person.social_distance(i_person, active, dif)
+                s_person.update_status(i_person, dif)
                 if s_person.status:
                     self.i_people += [s_person]
                     self.s_people.remove(s_person)
-                    print('+1 pal gulag')
+                    print('+1 infectado')
                     break
             for s2_person in self.s_people:
-                s_person.social_distance(s2_person, self.social_distance)
+                dif = np.subtract(s_person.log_pos, s2_person.log_pos)
+                s_person.social_distance(s2_person, active, dif)
 
             s_person.update_pos()
         print(f'sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}') \
