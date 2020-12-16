@@ -40,7 +40,7 @@ if __name__ == '__main__':
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     b = Builder()
-    p = Population(b, 100)
+    p = Population(b, 150)
 
     controller.set_population(p)
 
@@ -49,7 +49,10 @@ if __name__ == '__main__':
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
-        p.update()
+        if controller.binary_value:
+            p.update_grid2()
+        else:
+            p.update()
 
         p.draw(pipeline_pol_2d)
 

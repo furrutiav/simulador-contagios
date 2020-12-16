@@ -6,13 +6,12 @@ F. Urrutia V., CC3501, 2020-1
 
 from models import *
 import glfw
-from typing import Union
-import sys
 
 
 class Controller(object):
     def __init__(self):
         self.population: Population
+        self.binary_value = True
 
     def on_key(self, window, key, scancode, action, mods):
         if not (action == glfw.PRESS):
@@ -22,7 +21,8 @@ class Controller(object):
             print(f'distancia social: {self.population.social_distance}')
 
         if key == glfw.KEY_SPACE:
-            pass
+            self.binary_value = not self.binary_value
+            print(f'binary value: {self.binary_value}')
 
     def set_population(self, population):
         self.population = population
