@@ -95,10 +95,11 @@ class Person(object):
         "death_rate": 0.1 / 50
     }
 
-    def __init__(self, builder, index):
+    def __init__(self, builder, index, group=0):
         self.index = index
-        self.log_pos = tuple([[np.random.uniform(-1, 1) for _ in range(2)],
-                              [np.random.normal(0, 0.2) for _ in range(2)]][0])
+        self.group = group
+        self.log_pos = tuple([[np.random.normal(-0.1, 0.1) for _ in range(2)],
+                              [np.random.uniform(-1, 1) for _ in range(2)]][group])
         self.status = bernoulli.rvs(self.parameters["ratio"])
         self.builder = builder
         self.neighbors_visited = []
@@ -118,10 +119,10 @@ class Person(object):
 
     def update_pos(self):
         global c
-        alpha = 0.05
-        flow = [(np.cos(c * alpha), np.sin(c * alpha)), (-self.log_pos[0], -self.log_pos[1])][1]
-        new_pos = tuple([[np.random.normal(0, 0.003) + self.log_pos[i] for i in range(2)],
-                         [np.random.normal(0.005 * flow[i], 0.005) + self.log_pos[i] for i in range(2)]][1])
+        alpha = 0.04
+        flow = [(np.cos(c * alpha), np.sin(c * alpha)), (-self.log_pos[0], -self.log_pos[1])][self.group]
+        new_pos = tuple([[np.random.normal(0.01 * flow[i], 0.005) + self.log_pos[i] for i in range(2)],                # [np.random.normal(0, 0.003) + self.log_pos[i] for i in range(2)]
+                         [np.random.normal(0.005 * flow[i], 0.005) + self.log_pos[i] for i in range(2)]][self.group])
         if -1 <= new_pos[0] <= 1 and -1 <= new_pos[1] <= 1:
             self.log_pos = new_pos
         self.model.transform = tr.matmul([
@@ -164,7 +165,7 @@ class Person(object):
     def get_status(self):
         return self.status
 
-    def set_neighbors_visited(self, size):
+    def set_visited(self, size):
         self.neighbors_visited = [0 for _ in range(size)]
 
     def set_visit(self, index_other):
@@ -173,16 +174,13 @@ class Person(object):
     def is_visited(self, index_other):
         return self.neighbors_visited[index_other]
 
-    def update_visited(self, size):
-        self.neighbors_visited = [0 for _ in range(size)]
-
     def is_cell(self, cell):
         return bool([cell[i][0] <= self.log_pos[i] <= cell[i][1] for i in range(2)])
 
 
 class Population(object):
 
-    def __init__(self, builder, size, social_distance=False):
+    def __init__(self, builder, size, social_distance=False, groups=1):
         self.size = size
         self.social_distance = social_distance
         self.people = []
@@ -190,8 +188,8 @@ class Population(object):
         self.i_people = []
         self.d_people = []
         for k in range(size):
-            person_k = Person(builder, k)
-            person_k.set_neighbors_visited(size)
+            person_k = Person(builder, k, 0) if k < size/groups else Person(builder, k, 1)
+            person_k.set_visited(size)
             if person_k.get_status():
                 self.i_people.append(person_k)
             else:
@@ -231,42 +229,6 @@ class Population(object):
         print(f'sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}') \
             if not c % 100 else None
         c += 1
-        c = c % 100
-
-    def update_grid(self):
-        global c
-        for s_person in self.s_people:
-            active = self.social_distance
-            s_person_cell = None
-            for cell in grid["ternary"]:
-                cell_x = cell[0]
-                cell_y = cell[1]
-                if cell_x[0] <= s_person.log_pos[0] <= cell_x[1] and cell_y[0] <= s_person.log_pos[1] <= cell_y[1]:
-                    s_person_cell = cell
-                    break
-
-            cell_x = s_person_cell[0]
-            cell_y = s_person_cell[1]
-
-            for i_person in self.i_people:
-                if cell_x[0] <= i_person.log_pos[0] <= cell_x[1] and cell_y[0] <= i_person.log_pos[1] <= cell_y[1]:
-                    dif = get_dif(s_person.log_pos, i_person.log_pos)
-                    s_person.social_distance(i_person, active, dif)
-                    s_person.update_status(i_person, dif)
-                    if s_person.status:
-                        self.i_people += [s_person]
-                        self.s_people.remove(s_person)
-                        print('+1 infectado')
-                        break
-            for s2_person in self.s_people:
-                if cell_x[0] <= s2_person.log_pos[0] <= cell_x[1] and cell_y[0] <= s2_person.log_pos[1] <= \
-                        cell_y[1]:
-                    dif = get_dif(s_person.log_pos, s2_person.log_pos)
-                    s_person.social_distance(s2_person, active, dif)
-            s_person.update_pos()
-        self.show_data()
-        c += 1
-        c = c % 100
 
     def update_grid_smart(self, mode=3):
         global c
@@ -293,7 +255,7 @@ class Population(object):
                         person.set_visit(p2_index)
                         person2.set_visit(p_index)
                         if person2.is_cell(cell):
-                            dif = get_dif(person.get_log_pos(), person2.get_log_pos())
+                            dif = get_dif(p_log_pos, person2.get_log_pos())
                             person.social_distance(person2, active, dif)
                             if person.get_status() == 0 and person2.get_status() == 1:
                                 person.update_status(person2, dif)
@@ -311,15 +273,16 @@ class Population(object):
                                     break
                     p2_index += 1
                 person.update_pos()
+                if person.get_status() == 0:
+                    person.set_visited(self.size)
             p_index += 1
         self.s_people = s_people
         self.i_people = i_people
         self.d_people = d_people
-        for person in self.people:
-            person.update_visited(self.size)
+        for i_person in self.i_people:
+            i_person.set_visited(self.size)
         self.show_data()
         c += 1
-        c = c % 100
 
     def show_data(self):
         global c
