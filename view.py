@@ -5,10 +5,9 @@ F. Urrutia V., CC3501, 2020-1
 """
 import glfw
 import sys
-import imgui
 from models import *
 from controller import Controller
-
+import time
 
 if __name__ == '__main__':
     if not glfw.init():
@@ -34,7 +33,7 @@ if __name__ == '__main__':
 
     glClearColor(15 / 255, 33 / 255, 26 / 105, 1.0)
 
-    # glEnable(GL_DEPTH_TEST)
+    glEnable(GL_DEPTH_TEST)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -44,13 +43,16 @@ if __name__ == '__main__':
 
     controller.set_population(p)
 
+    time.sleep(1)
+
     while not glfw.window_should_close(window):
+
         glfw.poll_events()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         if controller.binary_value:
-            p.update_grid2()
+            p.update_grid_smart()
         else:
             p.update()
 
