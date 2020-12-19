@@ -19,3 +19,8 @@ avanzar un dia    # Key Right
 ```python
 p = Population(size=100, social_distance=False, groups=2)
 ```
+### Iterfaz (Terminal)
+...
+```bash
+> sanos: 19, infectados: 1, muertos: 46, recuperados: 34
+```
