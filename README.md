@@ -14,3 +14,9 @@ scipy     # software para matematica, ciencia e ingenieria
 distancia social  # Key S
 avanzar un dia    # Key Right
 ```
+### Inicio
+...
+```python
+distancia social  # Key S
+avanzar un dia    # Key Right
+```
