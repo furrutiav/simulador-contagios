@@ -11,5 +11,6 @@ scipy     # software para matematica, ciencia e ingenieria
 ### Controles
 ...
 ```bash
-distancia social  # swap active Key S
+distancia social  # Key S
+avanzar un dia    # Key Right
 ```
