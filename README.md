@@ -17,6 +17,5 @@ avanzar un dia    # Key Right
 ### Inicio
 ...
 ```python
-distancia social  # Key S
-avanzar un dia    # Key Right
+p = Population(size=100, social_distance=False, groups=2)
 ```
