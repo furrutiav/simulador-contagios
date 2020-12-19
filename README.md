@@ -24,3 +24,10 @@ p = Population(size=100, social_distance=False, groups=2)
 ```bash
 > sanos: 19, infectados: 1, muertos: 46, recuperados: 34
 ```
+### Estados
+```bash
+sano        # verde
+infectado   # rojo
+muerto      # azul
+recuperado  # amarillo
+```
