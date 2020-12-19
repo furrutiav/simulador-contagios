@@ -27,6 +27,7 @@ if __name__ == '__main__':
     controller = Controller()
 
     glfw.set_key_callback(window, controller.on_key)
+    glfw.set_scroll_callback(window, controller.on_scroll)
 
     pipeline_tx_2d = es.SimpleTextureTransformShaderProgram()
     pipeline_pol_2d = es.SimpleTransformShaderProgram()
@@ -54,7 +55,8 @@ if __name__ == '__main__':
         if controller.binary_value:
             p.update_grid_smart()
         else:
-            p.update()
+            controller.binary_value = not controller.binary_value
+            p.update_forward()
 
         p.draw(pipeline_pol_2d)
 

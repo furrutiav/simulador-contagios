@@ -13,46 +13,7 @@ from scipy.stats import bernoulli, norm
 from scipy.spatial import distance
 from typing import Union, List, Any
 
-c = 0
-
-border_radius = 0.05
-
-grid = {
-    "binary": [
-        [(-1, 0), (0, 1)], [(0, 1), (0, 1)],
-        [(-1, 0), (-1, 0)], [(0, 1), (-1, 0)]
-    ],
-    "ternary": [
-        [(-1, -1 / 3), (1 / 3, 1)], [(-1 / 3, 1 / 3), (1 / 3, 1)], [(1 / 3, 1), (1 / 3, 1)],
-        [(-1, -1 / 3), (-1 / 3, 1 / 3)], [(-1 / 3, 1 / 3), (-1 / 3, 1 / 3)], [(1 / 3, 1), (-1 / 3, 1 / 3)],
-        [(-1, -1 / 3), (-1, -1 / 3)], [(-1 / 3, 1 / 3), (-1, -1 / 3)], [(1 / 3, 1), (-1, -1 / 3)]
-    ],
-    "quaternary": [
-        [(-1.0, -0.5), (0.5, 1.0)], [(-0.5, 0.0), (0.5, 1.0)], [(0.0, 0.5), (0.5, 1.0)], [(0.5, 1.0), (0.5, 1.0)],
-        [(-1.0, -0.5), (0.0, 0.5)], [(-0.5, 0.0), (0.0, 0.5)], [(0.0, 0.5), (0.0, 0.5)], [(0.5, 1.0), (0.0, 0.5)],
-        [(-1.0, -0.5), (-0.5, 0.0)], [(-0.5, 0.0), (-0.5, 0.0)], [(0.0, 0.5), (-0.5, 0.0)], [(0.5, 1.0), (-0.5, 0.0)],
-        [(-1.0, -0.5), (-1.0, -0.5)], [(-0.5, 0.0), (-1.0, -0.5)], [(0.0, 0.5), (-1.0, -0.5)], [(0.5, 1.0), (-1.0, -0.5)]
-    ],
-    "border": [
-        [(-border_radius, border_radius), (1/3+border_radius, 1)],
-        [(-border_radius, border_radius), (1/3-border_radius, 1/3+border_radius)],
-        [(-border_radius, border_radius), (-1/3+border_radius, 1/3-border_radius)],
-        [(-border_radius, border_radius), (-1/3-border_radius, -1/3+border_radius)],
-        [(-border_radius, border_radius), (-1, -1/3-border_radius)],
-        [(-1, -1/3-border_radius), (-border_radius, border_radius)],
-        [(-1/3-border_radius, -1/3+border_radius), (-border_radius, border_radius)],
-        [(-1/3+border_radius, 1/3-border_radius), (-border_radius, border_radius)],
-        [(1/3-border_radius, 1/3+border_radius), (-border_radius, border_radius)],
-        [(1/3+border_radius, 1), (-border_radius, border_radius)]
-
-    ],
-    "dict_border": {
-        0: [(-1 / 3, 1 / 3), (1 / 3, 1)], 1: [(-1 / 3, 1 / 3), (-1 / 3, 1)], 2: [(-1 / 3, 1 / 3), (-1 / 3, 1/3)],
-        3: [(-1 / 3, 1 / 3), (-1, 1/3)], 4: [(-1 / 3, 1 / 3), (-1, -1/3)],
-        5: [(-1, -1 / 3), (-1 / 3, 1 / 3)], 6: [(-1, 1 / 3), (-1 / 3, 1 / 3)], 7: [(-1 / 3, 1 / 3), (-1 / 3, 1 / 3)],
-        8: [(-1 / 3, 1), (-1 / 3, 1 / 3)], 9: [(1 / 3, 1), (-1 / 3, 1 / 3)]
-    }
-}
+time = 0
 
 
 def get_grid_n_ary(n):
@@ -63,9 +24,6 @@ def get_grid_n_ary(n):
             row += [[(-1 + (2 / n) * i, -1 + (2 / n) * (i+1)), (1 - (2 / n) * (j+1), 1 - (2 / n) * j)]]
         grid_out += row
     return grid_out
-
-
-# print(get_grid_n_ary(4))
 
 
 class Builder(object):
@@ -87,12 +45,13 @@ class Builder(object):
 
 
 class Person(object):
+    iterations = 50
     parameters = {
         "status": {"sano": 0, "infectado": 1, "muerto": 2},
-        "prob_inf": 0.2 / 50,
+        "prob_inf": 0.2 / iterations,
         "ratio": 0.2,
         "radius": 0.05,
-        "death_rate": 0.1 / 50
+        "death_rate": 0.1 / iterations
     }
 
     def __init__(self, builder, index, group=0):
@@ -118,10 +77,10 @@ class Person(object):
         sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
 
     def update_pos(self):
-        global c
+        global time
         alpha = 0.04
-        flow = [(np.cos(c * alpha), np.sin(c * alpha)), (-self.log_pos[0], -self.log_pos[1])][self.group]
-        new_pos = tuple([[np.random.normal(0.01 * flow[i], 0.005) + self.log_pos[i] for i in range(2)],                # [np.random.normal(0, 0.003) + self.log_pos[i] for i in range(2)]
+        flow = [(np.cos(time * alpha), np.sin(time * alpha)), (-self.log_pos[0], -self.log_pos[1])][self.group]
+        new_pos = tuple([[np.random.normal(0.01 * flow[i], 0.005) + self.log_pos[i] for i in range(2)],
                          [np.random.normal(0.005 * flow[i], 0.005) + self.log_pos[i] for i in range(2)]][self.group])
         if -1 <= new_pos[0] <= 1 and -1 <= new_pos[1] <= 1:
             self.log_pos = new_pos
@@ -177,6 +136,9 @@ class Person(object):
     def is_cell(self, cell):
         return bool([cell[i][0] <= self.log_pos[i] <= cell[i][1] for i in range(2)])
 
+    def set_prob_inf(self, prob):
+        self.parameters["prob_inf"] = prob / self.iterations
+
 
 class Population(object):
 
@@ -198,10 +160,11 @@ class Population(object):
 
     def draw(self, pipeline):
         for person in self.people:
-            person.draw(pipeline)
+            if person.get_status() != 2:
+                person.draw(pipeline)
 
     def update(self):
-        global c
+        global time
         for i_person in self.i_people:
             i_person.update_pos()
             i_person.update_status()
@@ -227,11 +190,11 @@ class Population(object):
 
             s_person.update_pos()
         print(f'sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}') \
-            if not c % 100 else None
-        c += 1
+            if not time % 100 else None
+        time += 1
 
     def update_grid_smart(self, mode=3):
-        global c
+        global time
         s_people = self.s_people
         i_people = self.i_people
         d_people = self.d_people
@@ -282,12 +245,16 @@ class Population(object):
         for i_person in self.i_people:
             i_person.set_visited(self.size)
         self.show_data()
-        c += 1
+        time += 1
 
     def show_data(self):
-        global c
-        if not c % 100:
+        global time
+        if not time % 100:
             print(f'sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}')
+
+    def update_forward(self):
+        for _ in range(Person.iterations):
+            self.update_grid_smart()
 
 
 class Background(object):
