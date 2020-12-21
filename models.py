@@ -4,7 +4,6 @@ F. Urrutia V., CC3501, 2020-1
 Modelos:
 Builder, Person, Population
 """
-
 from libs import basic_shapes as bs, transformations as tr, easy_shaders as es, scene_graph as sg
 import numpy as np
 from OpenGL.GL import *
@@ -16,25 +15,16 @@ from typing import Union, List, Any
 time = 0
 
 
-def get_grid_n_ary(n):
-    grid_out = []
-    for j in range(n):
-        row = []
-        for i in range(n):
-            row += [[(-1 + (2 / n) * i, -1 + (2 / n) * (i+1)), (1 - (2 / n) * (j+1), 1 - (2 / n) * j)]]
-        grid_out += row
-    return grid_out
-
-
 class Builder(object):
     def __init__(self):
         self._gpu_models = [
             es.toGPUShape(bs.createColorQuad(0, 1, 0)),
             es.toGPUShape(bs.createColorQuad(1, 0, 0)),
-            es.toGPUShape(bs.createColorQuad(0, 0, 1))
+            es.toGPUShape(bs.createColorQuad(0, 0, 1)),
+            es.toGPUShape(bs.createColorQuad(1, 1, 0))
         ]
         self._graph = []
-        for i in range(3):
+        for i in range(4):
             node = sg.SceneGraphNode(f'base_node_{i}')
             node.childs += [self._gpu_models[i]]
 
@@ -47,11 +37,12 @@ class Builder(object):
 class Person(object):
     iterations = 50
     parameters = {
-        "status": {"sano": 0, "infectado": 1, "muerto": 2},
+        "status": {"sano": 0, "infectado": 1, "muerto": 2, "recuperado": 3},
         "prob_inf": 0.2 / iterations,
         "ratio": 0.2,
         "radius": 0.05,
-        "death_rate": 0.1 / iterations
+        "death_rate": 0.1 / iterations,
+        "days_to_heal": 5 * iterations
     }
 
     def __init__(self, builder, index, group=0):
@@ -62,6 +53,7 @@ class Person(object):
         self.status = bernoulli.rvs(self.parameters["ratio"])
         self.builder = builder
         self.neighbors_visited = []
+        self.day_zero = -1 if self.status == 0 else 0
 
         node = sg.SceneGraphNode(f'person_{index}')
         node.transform = tr.matmul([
@@ -115,8 +107,12 @@ class Person(object):
                     other.log_pos = tuple([0.1 * 1.5 * r * (-s[i]) * 0.5 + other.log_pos[i] for i in range(2)])
 
     def death(self):
+        global time
         if self.status == 1:
-            self.status = 1 + bernoulli.rvs(self.parameters["death_rate"])
+            if time - self.day_zero == self.parameters["days_to_heal"]:
+                self.status = 3
+            else:
+                self.status = 1 + bernoulli.rvs(self.parameters["death_rate"])
 
     def get_log_pos(self):
         return self.log_pos
@@ -139,16 +135,23 @@ class Person(object):
     def set_prob_inf(self, prob):
         self.parameters["prob_inf"] = prob / self.iterations
 
+    def set_day_zero(self):
+        global time
+        self.day_zero = time + 1
+
 
 class Population(object):
 
     def __init__(self, builder, size, social_distance=False, groups=1):
+        self.builder = builder
+        self.groups = groups
         self.size = size
         self.social_distance = social_distance
         self.people = []
         self.s_people = []
         self.i_people = []
         self.d_people = []
+        self.r_people = []
         for k in range(size):
             person_k = Person(builder, k, 0) if k < size/groups else Person(builder, k, 1)
             person_k.set_visited(size)
@@ -160,7 +163,7 @@ class Population(object):
 
     def draw(self, pipeline):
         for person in self.people:
-            if person.get_status() != 2:
+            if person.get_status() != 4:
                 person.draw(pipeline)
 
     def update(self):
@@ -198,13 +201,19 @@ class Population(object):
         s_people = self.s_people
         i_people = self.i_people
         d_people = self.d_people
+        r_people = self.r_people
         active = self.social_distance
         p_index = 0
         for person in self.people:
-            if (not person.is_visited(p_index)) and (person.get_status() in [0, 1]):
+            if (not person.is_visited(p_index)) and (person.get_status() in [0, 1, 3]):
                 if person.get_status() == 1:
                     person.update_status()
-                    if person.get_status() == 2:
+                    if person.get_status() == 3:
+                        r_people += [person]
+                        i_people.remove(person)
+                        print('+1 recuperado')
+                        break
+                    elif person.get_status() == 2:
                         d_people += [person]
                         i_people.remove(person)
                         print('+1 muerto')
@@ -223,6 +232,7 @@ class Population(object):
                             if person.get_status() == 0 and person2.get_status() == 1:
                                 person.update_status(person2, dif)
                                 if person.get_status() == 1:
+                                    person.set_day_zero()
                                     i_people += [person]
                                     s_people.remove(person)
                                     print('+1 infectado')
@@ -230,18 +240,20 @@ class Population(object):
                             elif person.get_status() == 1 and person2.get_status() == 0:
                                 person2.update_status(person, dif)
                                 if person2.get_status() == 1:
+                                    person2.set_day_zero()
                                     i_people += [person2]
                                     s_people.remove(person2)
                                     print('+1 infectado')
                                     break
                     p2_index += 1
                 person.update_pos()
-                if person.get_status() == 0:
+                if person.get_status() in [0, 3]:
                     person.set_visited(self.size)
             p_index += 1
         self.s_people = s_people
         self.i_people = i_people
         self.d_people = d_people
+        self.r_people = r_people
         for i_person in self.i_people:
             i_person.set_visited(self.size)
         self.show_data()
@@ -250,11 +262,27 @@ class Population(object):
     def show_data(self):
         global time
         if not time % 100:
-            print(f'sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}')
+            print(f'sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}, '
+                  f'recuperados: {len(self.r_people)}')
 
     def update_forward(self):
         for _ in range(Person.iterations):
             self.update_grid_smart()
+
+    def restart(self):
+        self.people = []
+        self.s_people = []
+        self.i_people = []
+        self.d_people = []
+        self.r_people = []
+        for k in range(self.size):
+            person_k = Person(self.builder, k, 0) if k < self.size/self.groups else Person(self.builder, k, 1)
+            person_k.set_visited(self.size)
+            if person_k.get_status():
+                self.i_people.append(person_k)
+            else:
+                self.s_people.append(person_k)
+        self.people += self.s_people + self.i_people
 
 
 class Background(object):
@@ -275,3 +303,13 @@ def get_norm(vec):
 
 def get_individual_n_grid(n, log_pos):
     return [(log_pos[i]-1/n, log_pos[i]+1/n) for i in range(2)]
+
+
+def get_grid_n_ary(n):
+    grid_out = []
+    for j in range(n):
+        row = []
+        for i in range(n):
+            row += [[(-1 + (2 / n) * i, -1 + (2 / n) * (i+1)), (1 - (2 / n) * (j+1), 1 - (2 / n) * j)]]
+        grid_out += row
+    return grid_out

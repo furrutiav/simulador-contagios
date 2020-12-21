@@ -28,10 +28,14 @@ class Controller(object):
             self.binary_value = not self.binary_value
             print(f'advance time (one day)!')
 
+        if key == glfw.KEY_R:
+            self.population.restart()
+            print(f'restart simulation!')
+
     def set_population(self, population):
         self.population = population
 
     def on_scroll(self, window, pos, action):
         prob = Person.parameters["prob_inf"] * Person.iterations
         Person.parameters["prob_inf"] += action * 0.1/Person.iterations if (1 >= prob + action * 0.1 >= 0) else 0
-        print(Person.parameters["prob_inf"] * 50)
+        print(Person.parameters["prob_inf"] * Person.iterations)

@@ -40,7 +40,7 @@ if __name__ == '__main__':
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     b = Builder()
-    p = Population(b, 100, groups=2)
+    p = Population(b, size=100, social_distance=False, groups=2)
 
     controller.set_population(p)
 
