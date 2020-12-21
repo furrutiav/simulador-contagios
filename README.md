@@ -11,5 +11,24 @@ scipy     # software para matematica, ciencia e ingenieria
 ### Controles
 ...
 ```bash
-distancia social  # swap active Key S
+distancia social  # Key S
+avanzar un dia    # Key Right
+```
+### Inicio
+...
+```python
+p = Population(size=100, social_distance=False, groups=2)
+```
+### Iterfaz (Terminal)
+...
+```bash
+> sanos: 19, infectados: 1, muertos: 46, recuperados: 34
+```
+### Estados
+...
+```bash
+sano        # verde
+infectado   # rojo
+muerto      # azul
+recuperado  # amarillo
 ```
