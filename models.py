@@ -21,6 +21,10 @@ data_virus = json.load(virus)[0]
 # init time
 time = 0
 
+color_dict = {'g': (0, 1, 0), 'r': (1, 0, 0), 'grey': (0.4, 0.4, 0.4), 'b': (0, 0, 1)}
+
+width, height = 1000, 1000
+
 
 class Builder(object):
     def __init__(self):
@@ -187,7 +191,7 @@ class Population(object):
         self.d_people = []
         self.r_people = []
         for k in range(size):
-            person_k = Person(builder, k, 0) if k < size/groups else Person(builder, k, 1)
+            person_k = Person(builder, k, 0) if k < size / groups else Person(builder, k, 1)
             person_k.set_visited(size)
             if person_k.get_status():
                 self.i_people.append(person_k)
@@ -195,6 +199,8 @@ class Population(object):
                 self.s_people.append(person_k)
             root.childs += [person_k.get_model()]
         self.people += self.s_people + self.i_people
+
+        self.count = [[len(people)] for people in [self.s_people, self.i_people, self.d_people, self.r_people]]
 
         self.model = root
 
@@ -293,6 +299,8 @@ class Population(object):
         for i_person in self.i_people:
             i_person.set_visited(self.size)
         self.show_data()
+        for index, people in enumerate([self.s_people, self.i_people, self.d_people, self.r_people]):
+            self.count[index].append(len(people))
         time += 1
 
     def show_data(self):
@@ -327,7 +335,7 @@ class Population(object):
                 self.s_people.append(person_k)
             root.childs += [person_k.get_model()]
         self.people += self.s_people + self.i_people
- 
+
         self.model = root
 
 
@@ -350,7 +358,8 @@ class Community(object):
 
 
 class Background(object):
-    def __init__(self):
+    def __init__(self, pop1):
+        self.population = pop1
         square_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
 
         square1 = sg.SceneGraphNode('square1')
@@ -370,11 +379,64 @@ class Background(object):
         squares = sg.SceneGraphNode('squares')
         squares.childs += [square1, square2]
 
+        self.bars = []
         self.model = squares
+
+        for i, c in enumerate(color_dict.keys()):
+            self.set_percent_bar(color=c, center=(-0.5, (2-i) * 0.05 + 0.025 + 0.5))
 
     def draw(self, pipeline):
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
+
+    def set_percent_bar(self, value=0, size=(0.5, 0.05), center=(0, 0), color='g'):
+        pB = PercentBar(value, size, center, color)
+        self.bars.append(pB)
+        self.model.childs += [pB.get()]
+
+    def update(self):
+        for i, b in enumerate(self.bars):
+            b.set(self.population.count[i][-1] / 100)
+
+
+class PercentBar(object):
+
+    def __init__(self, value, size, center, color):
+        self.value = value
+        in_bar_gpu = es.toGPUShape(apply_tuple(bs.createColorQuad)(color_dict[color]))
+        out_bar_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
+
+        out_bar = sg.SceneGraphNode('out_bar')
+        out_bar.childs += [out_bar_gpu]
+
+        in_bar = sg.SceneGraphNode('in_bar')
+        in_bar.transform = tr.matmul([
+            tr.translate((value - 1) / 2, 0, 0),
+            tr.scale(value, 1, 1)
+        ])
+        in_bar.childs += [in_bar_gpu]
+
+        center = center[0], center[1], 0
+        size = size[0], size[1], 1
+
+        bar = sg.SceneGraphNode('bar')
+        bar.transform = tr.matmul([
+            apply_tuple(tr.translate)(center),
+            apply_tuple(tr.scale)(size)
+        ])
+        bar.childs += [in_bar, out_bar]
+
+        self.in_bar = in_bar
+        self.model = bar
+
+    def set(self, value):
+        self.in_bar.transform = tr.matmul([
+            tr.translate((value - 1) / 2, 0, 0),
+            tr.scale(value, 1, 1)
+        ])
+
+    def get(self):
+        return self.model
 
 
 def get_dif(vec1, vec2):
@@ -386,7 +448,7 @@ def get_norm(vec):
 
 
 def get_individual_n_grid(n, log_pos):
-    return [(log_pos[i]-1/n, log_pos[i]+1/n) for i in range(2)]
+    return [(log_pos[i] - 1 / n, log_pos[i] + 1 / n) for i in range(2)]
 
 
 def get_grid_n_ary(n):
@@ -394,7 +456,7 @@ def get_grid_n_ary(n):
     for j in range(n):
         row = []
         for i in range(n):
-            row += [[(-1 + (2 / n) * i, -1 + (2 / n) * (i+1)), (1 - (2 / n) * (j+1), 1 - (2 / n) * j)]]
+            row += [[(-1 + (2 / n) * i, -1 + (2 / n) * (i + 1)), (1 - (2 / n) * (j + 1), 1 - (2 / n) * j)]]
         grid_out += row
     return grid_out
 
@@ -405,6 +467,8 @@ def get_angle(log_pos):
 
 def get_rvs_circular(loc, scale):
     r = norm.rvs(loc, scale)
-    theta = uniform.rvs(0, 2*np.pi)
+    theta = uniform.rvs(0, 2 * np.pi)
     return [r * np.sin(theta), r * np.cos(theta)]
 
+
+apply_tuple = lambda f: lambda args: f(*args)

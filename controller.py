@@ -6,6 +6,8 @@ F. Urrutia V., CC3501, 2020-1
 
 from models import *
 import glfw
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Controller(object):
@@ -31,6 +33,18 @@ class Controller(object):
         if key == glfw.KEY_R:
             self.population.restart()
             print(f'restart simulation!')
+
+        if key == glfw.KEY_P:
+            global time
+            fig, aux = plt.subplots(figsize=(10, 5))
+            aux.plot(self.population.count[0], color='g', label='sanos')
+            aux.plot(self.population.count[1], color='r', label='infectados')
+            aux.plot(self.population.count[2], color='grey', label='muertos')
+            aux.plot(self.population.count[3], color='b', label='recuperados')
+            aux.set_ylim(0, self.population.size)
+            aux.set_title('Estado población #1')
+            aux.legend()
+            plt.show()
 
     def set_population(self, population):
         self.population = population

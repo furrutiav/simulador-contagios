@@ -12,8 +12,6 @@ from time import sleep
 if __name__ == '__main__':
     if not glfw.init():
         sys.exit()
-
-    width, height = 1000, 1000
     # second_monitor = glfw.get_monitors()[1]
     window = glfw.create_window(
         width, height, 'Simulador Contagios; Autor: F. Urrutia V.', None, None)
@@ -42,7 +40,7 @@ if __name__ == '__main__':
     pop1 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.5, 0.5))
     pop2 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.5, -0.5))
     C = Community(pop1, pop2)
-    B = Background()
+    B = Background(pop1)
 
     controller.set_population(pop1)
 
@@ -56,6 +54,7 @@ if __name__ == '__main__':
 
         if controller.binary_value:
             C.update()
+            B.update()
 
         else:
             controller.binary_value = not controller.binary_value
