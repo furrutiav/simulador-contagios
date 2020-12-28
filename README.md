@@ -11,15 +11,16 @@ scipy     # software para matematica, ciencia e ingenieria
 ### Controles
 ...
 ```bash
-distancia social  # Key S
-avanzar un dia    # Key Right
+distancia social    # Key S
+avanzar un dia      # Key Right
+restart simulation  # Key R
 ```
 ### Inicio
 ...
 ```python
 p = Population(size=100, social_distance=False, groups=2)
 ```
-### Iterfaz (Terminal)
+### Interfaz (Terminal)
 ...
 ```bash
 > sanos: 19, infectados: 1, muertos: 46, recuperados: 34
