@@ -39,18 +39,21 @@ class Person(object):
     parameters = {
         "status": {"sano": 0, "infectado": 1, "muerto": 2, "recuperado": 3},
         "prob_inf": 0.2 / iterations,
-        "ratio": 0.2,
+        "ratio_inf": 0.2,
         "radius": 0.05,
         "death_rate": 0.1 / iterations,
-        "days_to_heal": 5 * iterations
+        "days_to_heal": 5 * iterations,
+        "prob_social_distance": 1
+
     }
 
     def __init__(self, builder, index, group=0):
+        self.social_distance = bernoulli.rvs(self.parameters["prob_social_distance"])
         self.index = index
         self.group = group
         self.log_pos = tuple([[np.random.normal(-0.1, 0.1) for _ in range(2)],
                               [np.random.uniform(-1, 1) for _ in range(2)]][group])
-        self.status = bernoulli.rvs(self.parameters["ratio"])
+        self.status = bernoulli.rvs(self.parameters["ratio_inf"])
         self.builder = builder
         self.neighbors_visited = []
         self.day_zero = -1 if self.status == 0 else 0
@@ -96,15 +99,17 @@ class Person(object):
             if d < r:
                 self.status = bernoulli.rvs(self.parameters["prob_inf"])
 
-    def social_distance(self, other, active, dif):
+    def apply_social_distance(self, other, active, dif):
         if active:
             if other:
                 d = get_norm(dif)
                 s = [dif[i] / d for i in range(2)] if d > 0 else (0, 0)
                 r = self.parameters["radius"]
                 if d < 1.5 * r:
-                    self.log_pos = tuple([0.1 * 1.5 * r * s[i] * 0.5 + self.log_pos[i] for i in range(2)])
-                    other.log_pos = tuple([0.1 * 1.5 * r * (-s[i]) * 0.5 + other.log_pos[i] for i in range(2)])
+                    if self.social_distance == 1:
+                        self.log_pos = tuple([0.1 * 1.5 * r * s[i] * 0.5 + self.log_pos[i] for i in range(2)])
+                    if other.social_distance == 1:
+                        other.log_pos = tuple([0.1 * 1.5 * r * (-s[i]) * 0.5 + other.log_pos[i] for i in range(2)])
 
     def death(self):
         global time
@@ -113,6 +118,9 @@ class Person(object):
                 self.status = 3
             else:
                 self.status = 1 + bernoulli.rvs(self.parameters["death_rate"])
+
+    def get_model(self):
+        return self.model
 
     def get_log_pos(self):
         return self.log_pos
@@ -147,6 +155,10 @@ class Population(object):
         self.groups = groups
         self.size = size
         self.social_distance = social_distance
+
+        root = sg.SceneGraphNode('root')
+        root.childs = []
+
         self.people = []
         self.s_people = []
         self.i_people = []
@@ -159,12 +171,14 @@ class Population(object):
                 self.i_people.append(person_k)
             else:
                 self.s_people.append(person_k)
+            root.childs += [person_k.get_model()]
         self.people += self.s_people + self.i_people
 
+        self.model = root
+
     def draw(self, pipeline):
-        for person in self.people:
-            if person.get_status() != 4:
-                person.draw(pipeline)
+        glUseProgram(pipeline.shaderProgram)
+        sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
 
     def update(self):
         global time
@@ -180,7 +194,7 @@ class Population(object):
             active = self.social_distance
             for i_person in self.i_people:
                 dif = np.subtract(s_person.get_log_pos(), i_person.get_log_pos())
-                s_person.social_distance(i_person, active, dif)
+                s_person.apply_social_distance(i_person, active, dif)
                 s_person.update_status(i_person, dif)
                 if s_person.get_status():
                     self.i_people += [s_person]
@@ -189,7 +203,7 @@ class Population(object):
                     break
             for s2_person in self.s_people:
                 dif = np.subtract(s_person.get_log_pos(), s2_person.get_log_pos())
-                s_person.social_distance(s2_person, active, dif)
+                s_person.apply_social_distance(s2_person, active, dif)
 
             s_person.update_pos()
         print(f'sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}') \
@@ -228,7 +242,7 @@ class Population(object):
                         person2.set_visit(p_index)
                         if person2.is_cell(cell):
                             dif = get_dif(p_log_pos, person2.get_log_pos())
-                            person.social_distance(person2, active, dif)
+                            person.apply_social_distance(person2, active, dif)
                             if person.get_status() == 0 and person2.get_status() == 1:
                                 person.update_status(person2, dif)
                                 if person.get_status() == 1:
@@ -270,19 +284,25 @@ class Population(object):
             self.update_grid_smart()
 
     def restart(self):
+        root = sg.SceneGraphNode('root')
+        root.childs = []
+
         self.people = []
         self.s_people = []
         self.i_people = []
         self.d_people = []
         self.r_people = []
         for k in range(self.size):
-            person_k = Person(self.builder, k, 0) if k < self.size/self.groups else Person(self.builder, k, 1)
+            person_k = Person(self.builder, k, 0) if k < self.size / self.groups else Person(self.builder, k, 1)
             person_k.set_visited(self.size)
             if person_k.get_status():
                 self.i_people.append(person_k)
             else:
                 self.s_people.append(person_k)
+            root.childs += [person_k.get_model()]
         self.people += self.s_people + self.i_people
+ 
+        self.model = root
 
 
 class Background(object):

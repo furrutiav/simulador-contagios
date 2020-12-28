@@ -21,7 +21,6 @@ if __name__ == '__main__':
     if not window:
         glfw.terminate()
         sys.exit()
-
     glfw.make_context_current(window)
 
     controller = Controller()
