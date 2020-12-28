@@ -8,10 +8,16 @@ from libs import basic_shapes as bs, transformations as tr, easy_shaders as es, 
 import numpy as np
 from OpenGL.GL import *
 import random as rd
-from scipy.stats import bernoulli, norm
+from scipy.stats import bernoulli, norm, uniform
 from scipy.spatial import distance
 from typing import Union, List, Any
+import json
 
+
+# load virus
+virus = open('virus.json')
+data_virus = json.load(virus)[0]
+# init time
 time = 0
 
 
@@ -20,8 +26,8 @@ class Builder(object):
         self._gpu_models = [
             es.toGPUShape(bs.createColorQuad(0, 1, 0)),
             es.toGPUShape(bs.createColorQuad(1, 0, 0)),
-            es.toGPUShape(bs.createColorQuad(0, 0, 1)),
-            es.toGPUShape(bs.createColorQuad(1, 1, 0))
+            es.toGPUShape(bs.createColorQuad(0.4, 0.4, 0.4)),
+            es.toGPUShape(bs.createColorQuad(0, 0, 1))
         ]
         self._graph = []
         for i in range(4):
@@ -38,12 +44,12 @@ class Person(object):
     iterations = 50
     parameters = {
         "status": {"sano": 0, "infectado": 1, "muerto": 2, "recuperado": 3},
-        "prob_inf": 0.2 / iterations,
-        "ratio_inf": 0.2,
-        "radius": 0.05,
-        "death_rate": 0.1 / iterations,
-        "days_to_heal": 5 * iterations,
-        "prob_social_distance": 1
+        "prob_inf": data_virus['Contagious_prob'] / iterations,
+        "ratio_inf": 0.1,
+        "radius": data_virus['Radius'],
+        "death_rate": data_virus['Death_rate'] / iterations,
+        "days_to_heal": data_virus['Days_to_heal'] * iterations,
+        "prob_social_distance": 0.5
 
     }
 
@@ -51,8 +57,8 @@ class Person(object):
         self.social_distance = bernoulli.rvs(self.parameters["prob_social_distance"])
         self.index = index
         self.group = group
-        self.log_pos = tuple([[np.random.normal(-0.1, 0.1) for _ in range(2)],
-                              [np.random.uniform(-1, 1) for _ in range(2)]][group])
+        self.log_pos = tuple([[np.random.normal(0, 0.15) for _ in range(2)],
+                              get_rvs_circular(0.5, 0.1)][group])
         self.status = bernoulli.rvs(self.parameters["ratio_inf"])
         self.builder = builder
         self.neighbors_visited = []
@@ -73,10 +79,8 @@ class Person(object):
 
     def update_pos(self):
         global time
-        alpha = 0.04
-        flow = [(np.cos(time * alpha), np.sin(time * alpha)), (-self.log_pos[0], -self.log_pos[1])][self.group]
-        new_pos = tuple([[np.random.normal(0.01 * flow[i], 0.005) + self.log_pos[i] for i in range(2)],
-                         [np.random.normal(0.005 * flow[i], 0.005) + self.log_pos[i] for i in range(2)]][self.group])
+        flow = [self.circular_flow(1), self.circular_flow(-1)][self.group]
+        new_pos = [np.random.normal(0.01 * flow[i], 0.002) + self.log_pos[i] for i in range(2)]
         if -1 <= new_pos[0] <= 1 and -1 <= new_pos[1] <= 1:
             self.log_pos = new_pos
         self.model.transform = tr.matmul([
@@ -99,13 +103,13 @@ class Person(object):
             if d < r:
                 self.status = bernoulli.rvs(self.parameters["prob_inf"])
 
-    def apply_social_distance(self, other, active, dif):
+    def apply_social_distance(self, other, active, dif, dist=1.5):
         if active:
             if other:
                 d = get_norm(dif)
                 s = [dif[i] / d for i in range(2)] if d > 0 else (0, 0)
                 r = self.parameters["radius"]
-                if d < 1.5 * r:
+                if d < dist * r:
                     if self.social_distance == 1:
                         self.log_pos = tuple([0.1 * 1.5 * r * s[i] * 0.5 + self.log_pos[i] for i in range(2)])
                     if other.social_distance == 1:
@@ -146,6 +150,14 @@ class Person(object):
     def set_day_zero(self):
         global time
         self.day_zero = time + 1
+
+    def circular_flow(self, om=1):
+        global time
+        r = get_norm(self.log_pos)
+        theta = get_angle(self.log_pos)
+        vx = - om * r * np.sin(theta)
+        vy = om * r * np.cos(theta)
+        return vx, vy
 
 
 class Population(object):
@@ -333,3 +345,14 @@ def get_grid_n_ary(n):
             row += [[(-1 + (2 / n) * i, -1 + (2 / n) * (i+1)), (1 - (2 / n) * (j+1), 1 - (2 / n) * j)]]
         grid_out += row
     return grid_out
+
+
+def get_angle(log_pos):
+    return np.arctan2(log_pos[1], log_pos[0])
+
+
+def get_rvs_circular(loc, scale):
+    r = norm.rvs(loc, scale)
+    theta = uniform.rvs(0, 2*np.pi)
+    return [r * np.sin(theta), r * np.cos(theta)]
+
