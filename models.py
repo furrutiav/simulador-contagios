@@ -12,7 +12,8 @@ from scipy.stats import bernoulli, norm, uniform
 from scipy.spatial import distance
 from typing import Union, List, Any
 import json
-
+from multiprocessing import Process, Pool
+from numba import njit, prange
 
 # load virus
 virus = open('virus.json')
@@ -57,8 +58,8 @@ class Person(object):
         self.social_distance = bernoulli.rvs(self.parameters["prob_social_distance"])
         self.index = index
         self.group = group
-        self.log_pos = tuple([[np.random.normal(0, 0.15) for _ in range(2)],
-                              get_rvs_circular(0.5, 0.1)][group])
+        self.log_pos = tuple([[np.random.normal(0, 0.2) for _ in range(2)],
+                              get_rvs_circular(0.6, 0.15)][group])
         self.status = bernoulli.rvs(self.parameters["ratio_inf"])
         self.builder = builder
         self.neighbors_visited = []
@@ -81,7 +82,7 @@ class Person(object):
         global time
         flow = [self.circular_flow(1), self.circular_flow(-1)][self.group]
         new_pos = [np.random.normal(0.01 * flow[i], 0.002) + self.log_pos[i] for i in range(2)]
-        if -1 <= new_pos[0] <= 1 and -1 <= new_pos[1] <= 1:
+        if -1 < new_pos[0] < 1 and -1 < new_pos[1] < 1:
             self.log_pos = new_pos
         self.model.transform = tr.matmul([
             tr.translate(self.log_pos[0], self.log_pos[1], 0),
@@ -111,9 +112,13 @@ class Person(object):
                 r = self.parameters["radius"]
                 if d < dist * r:
                     if self.social_distance == 1:
-                        self.log_pos = tuple([0.1 * 1.5 * r * s[i] * 0.5 + self.log_pos[i] for i in range(2)])
+                        new_pos = tuple([0.1 * 1.5 * r * s[i] * 0.5 + self.log_pos[i] for i in range(2)])
+                        if -1 < new_pos[0] < 1 and -1 < new_pos[1] < 1:
+                            self.log_pos = new_pos
                     if other.social_distance == 1:
-                        other.log_pos = tuple([0.1 * 1.5 * r * (-s[i]) * 0.5 + other.log_pos[i] for i in range(2)])
+                        new_pos = tuple([0.1 * 1.5 * r * (-s[i]) * 0.5 + other.log_pos[i] for i in range(2)])
+                        if -1 < new_pos[0] < 1 and -1 < new_pos[1] < 1:
+                            other.log_pos = new_pos
 
     def death(self):
         global time
@@ -162,13 +167,18 @@ class Person(object):
 
 class Population(object):
 
-    def __init__(self, builder, size, social_distance=False, groups=1):
+    def __init__(self, builder, size, social_distance=False, groups=1, view_center=(0, 0)):
         self.builder = builder
         self.groups = groups
         self.size = size
         self.social_distance = social_distance
+        self.view_center = view_center
 
         root = sg.SceneGraphNode('root')
+        root.transform = tr.matmul([
+            tr.translate(view_center[0], view_center[1], 0),
+            tr.uniformScale(0.4)
+        ])
         root.childs = []
 
         self.people = []
@@ -297,6 +307,10 @@ class Population(object):
 
     def restart(self):
         root = sg.SceneGraphNode('root')
+        root.transform = tr.matmul([
+            tr.translate(0.5, 0.5, 0),
+            tr.uniformScale(0.5)
+        ])
         root.childs = []
 
         self.people = []
@@ -317,12 +331,50 @@ class Population(object):
         self.model = root
 
 
+class Community(object):
+    def __init__(self, pop1, pop2):
+        self.pop1 = pop1
+        self.pop2 = pop2
+
+    def update(self):
+        self.pop1.update_grid_smart()
+        self.pop2.update_grid_smart()
+
+    def update_forward(self):
+        self.pop1.update_forward()
+        self.pop2.update_grid_smart()
+
+    def draw(self, pipeline):
+        self.pop1.draw(pipeline)
+        self.pop2.draw(pipeline)
+
+
 class Background(object):
     def __init__(self):
-        pass
+        square_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
 
-    def draw(self):
-        pass
+        square1 = sg.SceneGraphNode('square1')
+        square1.transform = tr.matmul([
+            tr.translate(0.5, 0.5, 0),
+            tr.uniformScale(0.8)
+        ])
+        square1.childs += [square_gpu]
+
+        square2 = sg.SceneGraphNode('square2')
+        square2.transform = tr.matmul([
+            tr.translate(0.5, -0.5, 0),
+            tr.uniformScale(0.8)
+        ])
+        square2.childs += [square_gpu]
+
+        squares = sg.SceneGraphNode('squares')
+        squares.childs += [square1, square2]
+
+        self.model = squares
+
+    def draw(self, pipeline):
+        glUseProgram(pipeline.shaderProgram)
+        sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
 
 
 def get_dif(vec1, vec2):

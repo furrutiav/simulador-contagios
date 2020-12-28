@@ -7,13 +7,13 @@ import glfw
 import sys
 from models import *
 from controller import Controller
-import time
+from time import sleep
 
 if __name__ == '__main__':
     if not glfw.init():
         sys.exit()
 
-    width, height = 900, 900
+    width, height = 1000, 1000
     # second_monitor = glfw.get_monitors()[1]
     window = glfw.create_window(
         width, height, 'Simulador Contagios; Autor: F. Urrutia V.', None, None)
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     pipeline_tx_2d = es.SimpleTextureTransformShaderProgram()
     pipeline_pol_2d = es.SimpleTransformShaderProgram()
 
-    glClearColor(15 / 255, 33 / 255, 26 / 105, 1.0)
+    glClearColor(15 / 255, 26 / 255, 43 / 255, 1.0)
 
     glEnable(GL_DEPTH_TEST)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
@@ -39,11 +39,14 @@ if __name__ == '__main__':
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     b = Builder()
-    p = Population(b, size=100, social_distance=False, groups=2)
+    pop1 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.5, 0.5))
+    pop2 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.5, -0.5))
+    C = Community(pop1, pop2)
+    B = Background()
 
-    controller.set_population(p)
+    controller.set_population(pop1)
 
-    time.sleep(1)
+    sleep(1)
 
     while not glfw.window_should_close(window):
 
@@ -52,12 +55,14 @@ if __name__ == '__main__':
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         if controller.binary_value:
-            p.update_grid_smart()
+            C.update()
+
         else:
             controller.binary_value = not controller.binary_value
-            p.update_forward()
+            C.update_forward()
 
-        p.draw(pipeline_pol_2d)
+        C.draw(pipeline_pol_2d)
+        B.draw(pipeline_pol_2d)
 
         glfw.swap_buffers(window)
 
