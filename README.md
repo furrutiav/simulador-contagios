@@ -20,7 +20,9 @@ seleccion              # Press Key 1 or 2
 ### Inicio
 ...
 ```python
-p = Population(size=100, social_distance=False, groups=2)
+b = Builder()
+pop1 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, 0.5))
+pop2 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, -0.5))
 ```
 ### Interfaz (Terminal)
 ...
