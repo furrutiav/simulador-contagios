@@ -54,8 +54,8 @@ class Person(object):
         "ratio_inf": 0.1,
         "radius": data_virus['Radius'],
         "death_rate": data_virus['Death_rate'] / iterations,
-        "days_to_heal": data_virus['Days_to_heal'] * iterations,
-        "prob_social_distance": 0.5
+        "days_to_heal": data_virus['Days_to_heal'],
+        "prob_social_distance": 1
 
     }
 
@@ -128,7 +128,7 @@ class Person(object):
     def death(self):
         global time
         if self.status == 1:
-            if time - self.day_zero == self.parameters["days_to_heal"]:
+            if time / 50 - self.day_zero >= self.parameters["days_to_heal"]:
                 self.status = 3
             else:
                 self.status = 1 + bernoulli.rvs(self.parameters["death_rate"])
@@ -159,7 +159,7 @@ class Person(object):
 
     def set_day_zero(self):
         global time
-        self.day_zero = time + 1
+        self.day_zero = time / 50 + 1
 
     def circular_flow(self, om=1):
         global time
@@ -247,8 +247,7 @@ class Population(object):
         d_people = self.d_people
         r_people = self.r_people
         active = self.social_distance
-        p_index = 0
-        for person in self.people:
+        for p_index, person in enumerate(self.people):
             if (not person.is_visited(p_index)) and (person.get_status() in [0, 1, 3]):
                 if person.get_status() == 1:
                     person.update_status()
@@ -265,8 +264,7 @@ class Population(object):
                 person.set_visit(p_index)
                 p_log_pos = person.get_log_pos()
                 cell = get_individual_n_grid(mode, p_log_pos)
-                p2_index = 0
-                for person2 in self.people:
+                for p2_index, person2 in enumerate(self.people):
                     if not person.is_visited(p2_index):
                         person.set_visit(p2_index)
                         person2.set_visit(p_index)
@@ -289,11 +287,9 @@ class Population(object):
                                     s_people.remove(person2)
                                     print('+1 infectado')
                                     break
-                    p2_index += 1
                 person.update_pos()
                 if person.get_status() in [0, 3]:
                     person.set_visited(self.size)
-            p_index += 1
         self.s_people = s_people
         self.i_people = i_people
         self.d_people = d_people
@@ -316,6 +312,8 @@ class Population(object):
             self.update_grid_smart()
 
     def restart(self):
+        global time
+        time = 0
         root = sg.SceneGraphNode('root')
         root.transform = tr.matmul([
             tr.translate(self.view_center[0], self.view_center[1], 0),
@@ -359,17 +357,26 @@ class Community(object):
         self.pop1.draw(pipeline)
         self.pop2.draw(pipeline)
 
+    def get_populations(self):
+        return [self.pop1, self.pop2]
+
 
 class Background(object):
-    def __init__(self, pop1):
-        self.population = pop1
+    def __init__(self, community):
+        self.community = community
         self.select = 0
+
+        self.populations = self.community.get_populations()
+
         square_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
         bound_gpu = es.toGPUShape(bs.createColorQuad(1, 1, 1))
 
+        pop1 = self.populations[0]
+        view_center1 = pop1.view_center[0], pop1.view_center[1], 0
+
         bound = sg.SceneGraphNode('bound')
         bound.transform = tr.matmul([
-            tr.translate(pop1.view_center[0], 0.5, 0),
+            tr.translate(self.populations[0].view_center[0], 0.5, 0),
             tr.uniformScale(0.81),
             tr.scale(1 / aspect_ratio, 1, 1)
         ])
@@ -377,15 +384,18 @@ class Background(object):
 
         square1 = sg.SceneGraphNode('square1')
         square1.transform = tr.matmul([
-            tr.translate(pop1.view_center[0], 0.5, 0),
+            apply_tuple(tr.translate)(view_center1),
             tr.uniformScale(0.8),
             tr.scale(1 / aspect_ratio, 1, 1)
         ])
         square1.childs += [square_gpu]
 
+        pop2 = self.populations[1]
+        view_center2 = pop2.view_center[0], pop2.view_center[1], 0
+
         square2 = sg.SceneGraphNode('square2')
         square2.transform = tr.matmul([
-            tr.translate(pop1.view_center[0], -0.5, 0),
+            apply_tuple(tr.translate)(view_center2),
             tr.uniformScale(0.8),
             tr.scale(1 / aspect_ratio, 1, 1)
         ])
@@ -401,7 +411,7 @@ class Background(object):
         for i, c in enumerate(list(color_dict.keys())[:4]):
             self.set_percent_bar(color=c, center=(-0.5, (2-i) * 0.05 + 0.025 + 0.5))
 
-        self.set_percent_bar(color='w', center=(0, 0))
+        self.set_percent_bar(color='w', center=(0.7, 0))
 
         self.set_button(active=0, center=(0, 0.5))
 
@@ -421,14 +431,16 @@ class Background(object):
 
     def update(self):
         for i, b in enumerate(self.bars[:-1]):
-            b.set(self.population.count[i][-1] / 100)
+            b.set(self.populations[self.select].count[i][-1] / 100)
 
         self.bars[-1].set((time % 50 + 1)/50)
 
     def set_select(self, value):
         self.select = value
+        pop = self.populations[self.select]
+        view_center = pop.view_center[0], pop.view_center[1], 0
         self.bound.transform = tr.matmul([
-            tr.translate(self.population.view_center[0], (-1)**value*0.5, 0),
+            apply_tuple(tr.translate)(view_center),
             tr.uniformScale(0.81),
             tr.scale(1 / aspect_ratio, 1, 1)
         ])

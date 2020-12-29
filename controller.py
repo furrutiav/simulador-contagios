@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 class Controller(object):
     def __init__(self):
-        self.population: Population
+        self.community: Community
         self.background: Background
         self.binary_value = True
 
@@ -20,9 +20,10 @@ class Controller(object):
         if not (action == glfw.PRESS):
             return
         if key == glfw.KEY_S:
-            self.population.social_distance = not self.population.social_distance
-            self.background.buttons[0].set(int(self.population.social_distance))
-            print(f'distancia social: {self.population.social_distance}')
+            population = self.community.get_populations()[self.background.select]
+            population.social_distance = not population.social_distance
+            self.background.buttons[0].set(int(population.social_distance))
+            print(f'distancia social: {population.social_distance}')
 
         if key == glfw.KEY_SPACE:
             self.binary_value = not self.binary_value
@@ -33,31 +34,34 @@ class Controller(object):
             print(f'advance time (one day)!')
 
         if key == glfw.KEY_R:
-            self.population.restart()
+            population = self.community.get_populations()[self.background.select]
+            population.restart()
             print(f'restart simulation!')
 
         if key == glfw.KEY_P:
-            global time
             fig, aux = plt.subplots(figsize=(10, 5))
-            aux.plot(self.population.count[0], color='g', label='sanos')
-            aux.plot(self.population.count[1], color='r', label='infectados')
-            aux.plot(self.population.count[2], color='grey', label='muertos')
-            aux.plot(self.population.count[3], color='b', label='recuperados')
-            aux.set_ylim(0, self.population.size)
-            aux.set_title('Estado población #1')
+            population = self.community.get_populations()[self.background.select]
+            aux.plot(population.count[0], color='g', label='sanos')
+            aux.plot(population.count[1], color='r', label='infectados')
+            aux.plot(population.count[2], color='grey', label='muertos')
+            aux.plot(population.count[3], color='b', label='recuperados')
+            aux.set_ylim(0, population.size)
+            aux.set_title(f'Estado población #{self.background.select+1}')
             aux.legend()
             plt.show()
 
-        if key == glfw.KEY_1:
+        if key == glfw.KEY_1 or key == glfw.KEY_UP:
             self.background.set_select(0)
+            self.background.buttons[0].set(int(self.community.get_populations()[0].social_distance))
             print('select #1')
 
-        if key == glfw.KEY_2:
+        if key == glfw.KEY_2 or key == glfw.KEY_DOWN:
             self.background.set_select(1)
+            self.background.buttons[0].set(int(self.community.get_populations()[1].social_distance))
             print('select #2')
 
-    def set_population(self, population):
-        self.population = population
+    def set_community(self, community):
+        self.community = community
 
     def set_background(self, background):
         self.background = background

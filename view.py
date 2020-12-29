@@ -40,9 +40,9 @@ if __name__ == '__main__':
     pop1 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, 0.5))
     pop2 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, -0.5))
     C = Community(pop1, pop2)
-    B = Background(pop1)
+    B = Background(C)
 
-    controller.set_population(pop1)
+    controller.set_community(C)
     controller.set_background(B)
 
     sleep(1)
