@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 class Controller(object):
     def __init__(self):
         self.population: Population
+        self.background: Background
         self.binary_value = True
 
     def on_key(self, window, key, scancode, action, mods):
@@ -20,6 +21,7 @@ class Controller(object):
             return
         if key == glfw.KEY_S:
             self.population.social_distance = not self.population.social_distance
+            self.background.buttons[0].set(int(self.population.social_distance))
             print(f'distancia social: {self.population.social_distance}')
 
         if key == glfw.KEY_SPACE:
@@ -46,8 +48,19 @@ class Controller(object):
             aux.legend()
             plt.show()
 
+        if key == glfw.KEY_1:
+            self.background.set_select(0)
+            print('select #1')
+
+        if key == glfw.KEY_2:
+            self.background.set_select(1)
+            print('select #2')
+
     def set_population(self, population):
         self.population = population
+
+    def set_background(self, background):
+        self.background = background
 
     def on_scroll(self, window, pos, action):
         prob = Person.parameters["prob_inf"] * Person.iterations

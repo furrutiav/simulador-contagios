@@ -21,9 +21,10 @@ data_virus = json.load(virus)[0]
 # init time
 time = 0
 
-color_dict = {'g': (0, 1, 0), 'r': (1, 0, 0), 'grey': (0.4, 0.4, 0.4), 'b': (0, 0, 1)}
+color_dict = {'g': (0, 1, 0), 'r': (1, 0, 0), 'grey': (0.4, 0.4, 0.4), 'b': (0, 0, 1), 'w': (1, 1, 1), 'cian': (0, 1, 1)}
 
-width, height = 1000, 1000
+width, height = int(1920 * 0.8), int(1080 * 0.8)
+aspect_ratio = width / height
 
 
 class Builder(object):
@@ -181,7 +182,8 @@ class Population(object):
         root = sg.SceneGraphNode('root')
         root.transform = tr.matmul([
             tr.translate(view_center[0], view_center[1], 0),
-            tr.uniformScale(0.4)
+            tr.uniformScale(0.4),
+            tr.scale(1 / aspect_ratio, 1, 1)
         ])
         root.childs = []
 
@@ -316,8 +318,9 @@ class Population(object):
     def restart(self):
         root = sg.SceneGraphNode('root')
         root.transform = tr.matmul([
-            tr.translate(0.5, 0.5, 0),
-            tr.uniformScale(0.5)
+            tr.translate(self.view_center[0], self.view_center[1], 0),
+            tr.uniformScale(0.4),
+            tr.scale(1 / aspect_ratio, 1, 1)
         ])
         root.childs = []
 
@@ -360,30 +363,47 @@ class Community(object):
 class Background(object):
     def __init__(self, pop1):
         self.population = pop1
+        self.select = 0
         square_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
+        bound_gpu = es.toGPUShape(bs.createColorQuad(1, 1, 1))
+
+        bound = sg.SceneGraphNode('bound')
+        bound.transform = tr.matmul([
+            tr.translate(pop1.view_center[0], 0.5, 0),
+            tr.uniformScale(0.81),
+            tr.scale(1 / aspect_ratio, 1, 1)
+        ])
+        bound.childs += [bound_gpu]
 
         square1 = sg.SceneGraphNode('square1')
         square1.transform = tr.matmul([
-            tr.translate(0.5, 0.5, 0),
-            tr.uniformScale(0.8)
+            tr.translate(pop1.view_center[0], 0.5, 0),
+            tr.uniformScale(0.8),
+            tr.scale(1 / aspect_ratio, 1, 1)
         ])
         square1.childs += [square_gpu]
 
         square2 = sg.SceneGraphNode('square2')
         square2.transform = tr.matmul([
-            tr.translate(0.5, -0.5, 0),
-            tr.uniformScale(0.8)
+            tr.translate(pop1.view_center[0], -0.5, 0),
+            tr.uniformScale(0.8),
+            tr.scale(1 / aspect_ratio, 1, 1)
         ])
         square2.childs += [square_gpu]
 
         squares = sg.SceneGraphNode('squares')
-        squares.childs += [square1, square2]
+        squares.childs += [square1, square2, bound]
 
+        self.bound = bound
         self.bars = []
+        self.buttons = []
         self.model = squares
-
-        for i, c in enumerate(color_dict.keys()):
+        for i, c in enumerate(list(color_dict.keys())[:4]):
             self.set_percent_bar(color=c, center=(-0.5, (2-i) * 0.05 + 0.025 + 0.5))
+
+        self.set_percent_bar(color='w', center=(0, 0))
+
+        self.set_button(active=0, center=(0, 0.5))
 
     def draw(self, pipeline):
         glUseProgram(pipeline.shaderProgram)
@@ -394,9 +414,24 @@ class Background(object):
         self.bars.append(pB)
         self.model.childs += [pB.get()]
 
+    def set_button(self, active=0, size=(0.05, 0.05), center=(0, 0), color='cian'):
+        b = Button(active, size, center, color)
+        self.buttons.append(b)
+        self.model.childs += [b.get()]
+
     def update(self):
-        for i, b in enumerate(self.bars):
+        for i, b in enumerate(self.bars[:-1]):
             b.set(self.population.count[i][-1] / 100)
+
+        self.bars[-1].set((time % 50 + 1)/50)
+
+    def set_select(self, value):
+        self.select = value
+        self.bound.transform = tr.matmul([
+            tr.translate(self.population.view_center[0], (-1)**value*0.5, 0),
+            tr.uniformScale(0.81),
+            tr.scale(1 / aspect_ratio, 1, 1)
+        ])
 
 
 class PercentBar(object):
@@ -422,7 +457,8 @@ class PercentBar(object):
         bar = sg.SceneGraphNode('bar')
         bar.transform = tr.matmul([
             apply_tuple(tr.translate)(center),
-            apply_tuple(tr.scale)(size)
+            apply_tuple(tr.scale)(size),
+            tr.scale(1 / aspect_ratio, 1, 1)
         ])
         bar.childs += [in_bar, out_bar]
 
@@ -433,6 +469,43 @@ class PercentBar(object):
         self.in_bar.transform = tr.matmul([
             tr.translate((value - 1) / 2, 0, 0),
             tr.scale(value, 1, 1)
+        ])
+
+    def get(self):
+        return self.model
+
+
+class Button(object):
+    def __init__(self, active, size, center, color):
+        in_button_gpu = es.toGPUShape(apply_tuple(bs.createColorQuad)(color_dict[color]))
+        out_button_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
+
+        out_button = sg.SceneGraphNode('out_button')
+        out_button.childs += [out_button_gpu]
+
+        in_button = sg.SceneGraphNode('in_button')
+        in_button.transform = tr.matmul([
+            tr.scale(active, 1, 1)
+        ])
+        in_button.childs += [in_button_gpu]
+
+        center = center[0], center[1], 0
+        size = size[0], size[1], 1
+
+        button = sg.SceneGraphNode('button')
+        button.transform = tr.matmul([
+            apply_tuple(tr.translate)(center),
+            apply_tuple(tr.scale)(size),
+            tr.scale(1 / aspect_ratio, 1, 1)
+        ])
+        button.childs += [in_button, out_button]
+
+        self.in_button = in_button
+        self.model = button
+
+    def set(self, active):
+        self.in_button.transform = tr.matmul([
+            tr.scale(active, 1, 1)
         ])
 
     def get(self):

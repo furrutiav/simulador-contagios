@@ -37,12 +37,13 @@ if __name__ == '__main__':
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     b = Builder()
-    pop1 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.5, 0.5))
-    pop2 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.5, -0.5))
+    pop1 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, 0.5))
+    pop2 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, -0.5))
     C = Community(pop1, pop2)
     B = Background(pop1)
 
     controller.set_population(pop1)
+    controller.set_background(B)
 
     sleep(1)
 
@@ -54,12 +55,12 @@ if __name__ == '__main__':
 
         if controller.binary_value:
             C.update()
-            B.update()
 
         else:
             controller.binary_value = not controller.binary_value
             C.update_forward()
 
+        B.update()
         C.draw(pipeline_pol_2d)
         B.draw(pipeline_pol_2d)
 
