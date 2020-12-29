@@ -14,6 +14,8 @@ scipy     # software para matematica, ciencia e ingenieria
 distancia social    # Key S
 avanzar un dia      # Key Right
 restart simulation  # Key R
+info                # Key P
+select              # Press Key 1 or 2
 ```
 ### Inicio
 ...
