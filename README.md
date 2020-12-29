@@ -1,4 +1,4 @@
-# simulador-contagios 🚧(en contrucción)
+# simulador-contagios 🚧
 ### Pre-requisitos
 Para comenzar es necesario pre-instalar las siguientes librerias para python: [glfw](https://pypi.org/project/glfw/), [pyopengl](https://pypi.org/project/PyOpenGL/), [numpy](https://pypi.org/project/numpy/), [pillow](https://pypi.org/project/Pillow/), [scipy](https://pypi.org/project/scipy/)
 ```bash
@@ -15,17 +15,19 @@ distancia social    # Key S
 avanzar un dia      # Key Right
 restart simulation  # Key R
 info                # Key P
-select              # Press Key 1 or 2
+seleccion              # Press Key 1 or 2
 ```
 ### Inicio
 ...
 ```python
-p = Population(size=100, social_distance=False, groups=2)
+b = Builder()
+pop1 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, 0.5))
+pop2 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, -0.5))
 ```
 ### Interfaz (Terminal)
 ...
 ```bash
-> sanos: 19, infectados: 1, muertos: 46, recuperados: 34
+> [2] sanos: 34, infectados: 36, muertos: 13, recuperados: 17
 ```
 ### Estados
 ...
