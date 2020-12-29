@@ -6,7 +6,7 @@ glfw      # librería OpenGL
 pyopengl  # OpenGL para python
 numpy     # operación con vectores y matrices
 pillow    # procesamiento de imágenes
-scipy     # software para matematica, ciencia e ingenieria
+scipy     # distribuciones de probabilidad
 ```
 ### Controles
 ...
@@ -15,7 +15,7 @@ distancia social    # Key S
 avanzar un dia      # Key Right
 restart simulation  # Key R
 info                # Key P
-seleccion              # Press Key 1 or 2
+seleccion           # Press Key 1 or 2
 ```
 ### Inicio
 ...
