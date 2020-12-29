@@ -27,7 +27,7 @@ pop2 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7
 ### Interfaz (Terminal)
 ...
 ```bash
-> sanos: 19, infectados: 1, muertos: 46, recuperados: 34
+> [2] sanos: 34, infectados: 36, muertos: 13, recuperados: 17
 ```
 ### Estados
 ...
