@@ -12,7 +12,6 @@ from time import sleep
 if __name__ == '__main__':
     if not glfw.init():
         sys.exit()
-    # second_monitor = glfw.get_monitors()[1]
     window = glfw.create_window(
         width, height, 'Simulador Contagios; Autor: F. Urrutia V.', None, None)
 

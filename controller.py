@@ -45,9 +45,13 @@ class Controller(object):
             aux.plot(population.count[1], color='r', label='infectados')
             aux.plot(population.count[2], color='grey', label='muertos')
             aux.plot(population.count[3], color='b', label='recuperados')
+            aux.set_xlabel('Tiempo [iter: 50 iter = 1 dia]')
+            aux.set_ylabel('Individuos [#]')
             aux.set_ylim(0, population.size)
             aux.set_title(f'Estado población #{self.background.select+1}')
+            aux.grid()
             aux.legend()
+            plt.subplots_adjust(wspace=0, hspace=0)
             plt.show()
 
         if key == glfw.KEY_1 or key == glfw.KEY_UP:

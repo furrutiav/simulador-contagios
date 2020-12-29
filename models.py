@@ -85,7 +85,7 @@ class Person(object):
 
     def update_pos(self):
         global time
-        flow = [self.circular_flow(1), self.circular_flow(-1)][self.group]
+        flow = [self.circular_flow(2), self.circular_flow(-1)][self.group]
         new_pos = [np.random.normal(0.01 * flow[i], 0.002) + self.log_pos[i] for i in range(2)]
         if -1 < new_pos[0] < 1 and -1 < new_pos[1] < 1:
             self.log_pos = new_pos
@@ -240,8 +240,7 @@ class Population(object):
             if not time % 100 else None
         time += 1
 
-    def update_grid_smart(self, mode=3):
-        global time
+    def update_grid_smart(self, mode=3, show=False):
         s_people = self.s_people
         i_people = self.i_people
         d_people = self.d_people
@@ -254,12 +253,12 @@ class Population(object):
                     if person.get_status() == 3:
                         r_people += [person]
                         i_people.remove(person)
-                        print('+1 recuperado')
+                        # print('+1 recuperado')
                         break
                     elif person.get_status() == 2:
                         d_people += [person]
                         i_people.remove(person)
-                        print('+1 muerto')
+                        # print('+1 muerto')
                         break
                 person.set_visit(p_index)
                 p_log_pos = person.get_log_pos()
@@ -277,7 +276,7 @@ class Population(object):
                                     person.set_day_zero()
                                     i_people += [person]
                                     s_people.remove(person)
-                                    print('+1 infectado')
+                                    # print('+1 infectado')
                                     break
                             elif person.get_status() == 1 and person2.get_status() == 0:
                                 person2.update_status(person, dif)
@@ -285,7 +284,7 @@ class Population(object):
                                     person2.set_day_zero()
                                     i_people += [person2]
                                     s_people.remove(person2)
-                                    print('+1 infectado')
+                                    # print('+1 infectado')
                                     break
                 person.update_pos()
                 if person.get_status() in [0, 3]:
@@ -296,15 +295,14 @@ class Population(object):
         self.r_people = r_people
         for i_person in self.i_people:
             i_person.set_visited(self.size)
-        self.show_data()
+        self.show_data() if show else None
         for index, people in enumerate([self.s_people, self.i_people, self.d_people, self.r_people]):
             self.count[index].append(len(people))
-        time += 1
 
-    def show_data(self):
+    def show_data(self, label=''):
         global time
-        if not time % 100:
-            print(f'sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}, '
+        if not time % Person.iterations:
+            print(f'[{label}] sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}, '
                   f'recuperados: {len(self.r_people)}')
 
     def update_forward(self):
@@ -346,16 +344,20 @@ class Community(object):
         self.pop2 = pop2
 
     def update(self):
-        self.pop1.update_grid_smart()
-        self.pop2.update_grid_smart()
+        global time
+        for _, pop in enumerate([self.pop1, self.pop2]):
+            pop.update_grid_smart()
+        time += 1
 
     def update_forward(self):
-        self.pop1.update_forward()
-        self.pop2.update_grid_smart()
+        global time
+        for _, pop in enumerate([self.pop1, self.pop2]):
+            pop.update_forward()
+        time += Person.iterations
 
     def draw(self, pipeline):
-        self.pop1.draw(pipeline)
-        self.pop2.draw(pipeline)
+        for _, pop in enumerate([self.pop1, self.pop2]):
+            pop.draw(pipeline)
 
     def get_populations(self):
         return [self.pop1, self.pop2]
@@ -376,7 +378,7 @@ class Background(object):
 
         bound = sg.SceneGraphNode('bound')
         bound.transform = tr.matmul([
-            tr.translate(self.populations[0].view_center[0], 0.5, 0),
+            apply_tuple(tr.translate)(view_center1),
             tr.uniformScale(0.81),
             tr.scale(1 / aspect_ratio, 1, 1)
         ])
@@ -430,10 +432,13 @@ class Background(object):
         self.model.childs += [b.get()]
 
     def update(self):
+        pop = self.populations[self.select]
         for i, b in enumerate(self.bars[:-1]):
-            b.set(self.populations[self.select].count[i][-1] / 100)
+            b.set(pop.count[i][-1] / pop.size)
 
-        self.bars[-1].set((time % 50 + 1)/50)
+        self.bars[-1].set((time % 50)/50)
+
+        pop.show_data(self.select+1)
 
     def set_select(self, value):
         self.select = value
