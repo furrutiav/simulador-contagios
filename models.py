@@ -182,6 +182,35 @@ class Person(object):
     def update_social_distance(self):
         self.social_distance = bernoulli.rvs(self.parameters["ratio_social_distance"])
 
+    def from_move_to(self, pop_out, pop_in):
+        pop_out.size += -1
+        pop_in.size += 1
+
+        pop_out.people.remove(self)
+        pop_in.people.append(self)
+
+        pop_out.model.childs.remove(self.model)
+        pop_in.model.childs.append(self.model)
+
+        if self.status == 0:
+            pop_out.s_people.remove(self)
+            pop_in.s_people.append(self)
+        elif self.status == 1:
+            pop_out.i_people.remove(self)
+            pop_in.i_people.append(self)
+        elif self.status == 2:
+            pop_out.d_people.remove(self)
+            pop_in.d_people.append(self)
+        elif self.status == 3:
+            pop_out.r_people.remove(self)
+            pop_in.r_people.append(self)
+
+        for person in pop_in.people:
+            person.set_visited(pop_in.size)
+
+        for person in pop_out.people:
+            person.set_visited(pop_out.size)
+
 
 class Population(object):
 
@@ -215,7 +244,8 @@ class Population(object):
             root.childs += [person_k.get_model()]
         self.people += self.s_people + self.i_people
 
-        self.count = [[len(people)] for people in [self.s_people, self.i_people, self.d_people, self.r_people]]
+        self.count = [[len(people)] for people in [self.s_people, self.i_people,
+                                                   self.d_people, self.r_people]]
 
         self.model = root
 
@@ -223,37 +253,7 @@ class Population(object):
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
 
-    def update(self):
-        global time
-        for i_person in self.i_people:
-            i_person.update_pos()
-            i_person.update_status()
-            if i_person.get_status() - 1:
-                self.d_people += [i_person]
-                self.i_people.remove(i_person)
-                print('+1 muerto')
-
-        for s_person in self.s_people:
-            active = self.social_distance
-            for i_person in self.i_people:
-                dif = np.subtract(s_person.get_log_pos(), i_person.get_log_pos())
-                s_person.apply_social_distance(i_person, active, dif)
-                s_person.update_status(i_person, dif)
-                if s_person.get_status():
-                    self.i_people += [s_person]
-                    self.s_people.remove(s_person)
-                    print('+1 infectado')
-                    break
-            for s2_person in self.s_people:
-                dif = np.subtract(s_person.get_log_pos(), s2_person.get_log_pos())
-                s_person.apply_social_distance(s2_person, active, dif)
-
-            s_person.update_pos()
-        print(f'sanos: {len(self.s_people)}, infectados: {len(self.i_people)}, muertos: {len(self.d_people)}') \
-            if not time % 100 else None
-        time += 1
-
-    def update_grid_smart(self, mode=3, show=False):
+    def update_grid_smart(self, mode=3):
         s_people = self.s_people
         i_people = self.i_people
         d_people = self.d_people
@@ -308,9 +308,12 @@ class Population(object):
         self.r_people = r_people
         for i_person in self.i_people:
             i_person.set_visited(self.size)
-        self.show_data() if show else None
         for index, people in enumerate([self.s_people, self.i_people, self.d_people, self.r_people]):
             self.count[index].append(len(people))
+
+    def update(self, pause=False):
+        if not pause:
+            self.update_grid_smart()
 
     def show_data(self, label=''):
         global time
@@ -361,16 +364,23 @@ class Population(object):
             elif person.social_distance == 1 and status == '-':
                 person.update_social_distance()
 
+    def move_to(self, person, pop):
+        person.from_move_to(self, pop)
+
+    def rand_move(self, pop):
+        person = rd.choice(self.people)
+        self.move_to(person, pop)
+
 
 class Community(object):
     def __init__(self, pop1, pop2):
         self.pop1 = pop1
         self.pop2 = pop2
 
-    def update(self):
+    def update(self, pause):
         global time
         for _, pop in enumerate([self.pop1, self.pop2]):
-            pop.update_grid_smart()
+            pop.update(pause)
         time += 1
 
     def update_forward(self):
@@ -449,9 +459,9 @@ class Background(object):
 
         self.set_percent_bar(color='b', center=(-0.5, -0.5-0.15))
 
-        self.set_button(active=0, center=(0.3, 0.5))
+        self.set_button(active=0, center=(0.318, 0.5))
 
-        self.set_percent_bar(color='cian', center=(0.3, 0.5 - 0.1))
+        self.set_percent_bar(color='cian', center=(0.318, 0.5 - 0.1))
 
         self.set_graph(size=(1.0, 0.4), center=(-0.4, 0.5))
 

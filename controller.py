@@ -17,6 +17,7 @@ class Controller(object):
         self.binary_value = True
         self.parameter = 'ESC'
         self.view = False
+        self.pause = False
 
     def on_key(self, window, key, scancode, action, mods):
         if not (action == glfw.PRESS):
@@ -146,6 +147,13 @@ class Controller(object):
 
         if key == glfw.KEY_ESCAPE:
             self.parameter = 'ESC'
+
+        if key == glfw.KEY_M:
+            self.pause = True
+            s = self.background.select
+            pop = self.community.get_populations()[s]
+            pop_ = self.community.get_populations()[(s+1) % 2]
+            pop.rand_move(pop_)
 
     def set_community(self, community):
         self.community = community
