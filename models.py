@@ -22,7 +22,7 @@ data_virus = json.load(virus)[0]
 time = 0
 
 color_dict = {'g': (0, 1, 0), 'r': (1, 0, 0), 'grey': (0.4, 0.4, 0.4),
-              'b': (0, 0, 1), 'w': (1, 1, 1), 'cian': (0, 1, 1)}
+              'b': (0, 0, 1), 'w': (1, 1, 1), 'cian': (0, 1, 1), 'y': (1, 1, 0)}
 
 width, height = int(1920 * 0.8), int(1080 * 0.8)
 aspect_ratio = width / height
@@ -420,6 +420,12 @@ class Background(object):
 
         self.set_percent_bar(color='r', center=(-0.5, -0.5))
 
+        self.set_percent_bar(color='y', center=(-0.5, -0.5-0.05))
+
+        self.set_percent_bar(color='grey', center=(-0.5, -0.5-0.1))
+
+        self.set_percent_bar(color='b', center=(-0.5, -0.5-0.15))
+
         self.set_button(active=0, center=(0.3, 0.5))
 
         self.set_graph(size=(1.0, 0.4), center=(-0.4, 0.5))
@@ -452,6 +458,12 @@ class Background(object):
         self.bars[4].set((time % ite)/ite)
 
         self.bars[5].set(Person.parameters['prob_inf'] * ite)
+
+        self.bars[6].set(Person.parameters['radius']/0.2)
+
+        self.bars[7].set(Person.parameters['death_rate'] * ite)
+
+        self.bars[8].set(Person.parameters['days_to_heal']/14)
 
         pop.show_data(self.select+1)
 

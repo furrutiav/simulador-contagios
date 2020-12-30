@@ -76,19 +76,52 @@ class Controller(object):
         if key == glfw.KEY_I:
             self.parameter = 'I'
 
+        if key == glfw.KEY_R:
+            self.parameter = 'R'
 
+        if key == glfw.KEY_D:
+            self.parameter = 'D'
+
+        if key == glfw.KEY_H:
+            self.parameter = 'H'
 
         if key == glfw.KEY_KP_ADD:
             if self.parameter == 'I':
                 ite = Person.iterations
                 prob = Person.parameters['prob_inf'] * ite
-                Person.parameters['prob_inf'] += 0.05 / ite if (1 >= prob + 0.05) else (1-prob)/ ite
+                Person.parameters['prob_inf'] += 0.05 / ite if (1 >= prob + 0.05) else (1-prob)/ite
+
+            if self.parameter == 'R':
+                radius = Person.parameters['radius']
+                Person.parameters['radius'] += 0.01 if (0.2 >= radius + 0.01) else (0.2-radius)
+
+            if self.parameter == 'D':
+                ite = Person.iterations
+                death_rate = Person.parameters['death_rate'] * ite
+                Person.parameters['death_rate'] += 0.05 / ite if (1 >= death_rate + 0.05) else (1-death_rate)/ite
+
+            if self.parameter == 'H':
+                days = Person.parameters['days_to_heal']
+                Person.parameters['days_to_heal'] += 1 if (14 >= days + 1) else (14 - days)
 
         if key == glfw.KEY_KP_SUBTRACT:
             if self.parameter == 'I':
                 ite = Person.iterations
                 prob = Person.parameters['prob_inf'] * ite
-                Person.parameters['prob_inf'] += - 0.05 / ite if (prob - 0.05 >= 0) else (0-prob)/ ite
+                Person.parameters['prob_inf'] += - 0.05 / ite if (prob - 0.05 >= 0) else (0-prob)/ite
+
+            if self.parameter == 'R':
+                radius = Person.parameters['radius']
+                Person.parameters['radius'] += -0.01 if (radius - 0.01 >= 0) else (0 - radius)
+
+            if self.parameter == 'D':
+                ite = Person.iterations
+                death_rate = Person.parameters['death_rate'] * ite
+                Person.parameters['death_rate'] += - 0.05 / ite if (death_rate + 0.05 >= 0) else (0-death_rate)/ite
+
+            if self.parameter == 'H':
+                days = Person.parameters['days_to_heal']
+                Person.parameters['days_to_heal'] += -1 if (days - 1 >= 0) else (0 - days)
 
         if key == glfw.KEY_ESCAPE:
             self.parameter = 'ESC'
