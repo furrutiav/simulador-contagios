@@ -16,6 +16,7 @@ class Controller(object):
         self.background: Background
         self.binary_value = True
         self.parameter = 'ESC'
+        self.view = False
 
     def on_key(self, window, key, scancode, action, mods):
         if not (action == glfw.PRESS):
@@ -38,9 +39,6 @@ class Controller(object):
             population = self.community.get_populations()[self.background.select]
             population.restart()
             print(f'restart simulation!')
-
-        if key == glfw.KEY_V:
-            print('vista distancia social')
 
         if key == glfw.KEY_P:
             graph = self.background.graphs[0]
@@ -122,6 +120,12 @@ class Controller(object):
             if self.parameter == 'H':
                 days = Person.parameters['days_to_heal']
                 Person.parameters['days_to_heal'] += -1 if (days - 1 >= 0) else (0 - days)
+
+        if key == glfw.KEY_V:
+            pop = self.community.get_populations()[self.background.select]
+            self.view = not self.view
+            pop.view_social_distance(self.view)
+            print(f'vista distancia social:{self.view}')
 
         if key == glfw.KEY_ESCAPE:
             self.parameter = 'ESC'

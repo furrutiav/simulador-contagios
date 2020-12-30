@@ -22,7 +22,7 @@ data_virus = json.load(virus)[0]
 time = 0
 
 color_dict = {'g': (0, 1, 0), 'r': (1, 0, 0), 'grey': (0.4, 0.4, 0.4),
-              'b': (0, 0, 1), 'w': (1, 1, 1), 'cian': (0, 1, 1), 'y': (1, 1, 0)}
+              'b': (0, 0, 1), 'w': (1, 1, 1), 'y': (1, 1, 0), 'cian': (0, 1, 1)}
 
 width, height = int(1920 * 0.8), int(1080 * 0.8)
 aspect_ratio = width / height
@@ -34,10 +34,12 @@ class Builder(object):
             es.toGPUShape(bs.createColorQuad(0, 1, 0)),
             es.toGPUShape(bs.createColorQuad(1, 0, 0)),
             es.toGPUShape(bs.createColorQuad(0.4, 0.4, 0.4)),
-            es.toGPUShape(bs.createColorQuad(0, 0, 1))
+            es.toGPUShape(bs.createColorQuad(0, 0, 1)),
+            es.toGPUShape(bs.createColorQuad(1, 1, 0)),
+            es.toGPUShape(bs.createColorQuad(0, 1, 1))
         ]
         self._graph = []
-        for i in range(4):
+        for i in range(6):
             node = sg.SceneGraphNode(f'base_node_{i}')
             node.childs += [self._gpu_models[i]]
 
@@ -50,13 +52,13 @@ class Builder(object):
 class Person(object):
     iterations = 50
     parameters = {
-        "status": {"sano": 0, "infectado": 1, "muerto": 2, "recuperado": 3},
+        "status": {"sano": 0, "infectado": 1, "muerto": 2, "recuperado": 3, 'false': 4, 'true': 5},
         "prob_inf": data_virus['Contagious_prob'] / iterations,
         "ratio_inf": 0.1,
         "radius": data_virus['Radius'],
         "death_rate": data_virus['Death_rate'] / iterations,
         "days_to_heal": data_virus['Days_to_heal'],
-        "prob_social_distance": 1
+        "prob_social_distance": 0.5
 
     }
 
@@ -169,6 +171,12 @@ class Person(object):
         vx = - om * r * np.sin(theta)
         vy = om * r * np.cos(theta)
         return vx, vy
+
+    def view_social_distance(self, active=True):
+        if active:
+            self.model.childs = [self.builder.get_graph()[4+self.social_distance]]
+        else:
+            self.model.childs = [self.builder.get_graph()[self.status]]
 
 
 class Population(object):
@@ -337,6 +345,10 @@ class Population(object):
         self.people += self.s_people + self.i_people
 
         self.model = root
+
+    def view_social_distance(self, active=True):
+        for person in self.people:
+            person.view_social_distance(active)
 
 
 class Community(object):
