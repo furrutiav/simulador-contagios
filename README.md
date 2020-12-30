@@ -16,6 +16,14 @@ avanzar un dia      # Key Right
 restart simulation  # Key R
 info                # Key P
 seleccion           # Press Key 1 or 2
+
+prob infeccion      # set Key I
+radius              # set Key R
+death rate          # set Key D
+days to heal        # set Key H
+
+aumentar            $ Key +
+disminuir           # Key -
 ```
 ### Inicio
 ...
