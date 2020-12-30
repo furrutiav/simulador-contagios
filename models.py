@@ -21,7 +21,8 @@ data_virus = json.load(virus)[0]
 # init time
 time = 0
 
-color_dict = {'g': (0, 1, 0), 'r': (1, 0, 0), 'grey': (0.4, 0.4, 0.4), 'b': (0, 0, 1), 'w': (1, 1, 1), 'cian': (0, 1, 1)}
+color_dict = {'g': (0, 1, 0), 'r': (1, 0, 0), 'grey': (0.4, 0.4, 0.4),
+              'b': (0, 0, 1), 'w': (1, 1, 1), 'cian': (0, 1, 1)}
 
 width, height = int(1920 * 0.8), int(1080 * 0.8)
 aspect_ratio = width / height
@@ -86,7 +87,7 @@ class Person(object):
     def update_pos(self):
         global time
         flow = [self.circular_flow(2), self.circular_flow(-1)][self.group]
-        new_pos = [np.random.normal(0.01 * flow[i], 0.002) + self.log_pos[i] for i in range(2)]
+        new_pos = [np.random.normal(0.01 * flow[i], 0.005) + self.log_pos[i] for i in range(2)]
         if -1 < new_pos[0] < 1 and -1 < new_pos[1] < 1:
             self.log_pos = new_pos
         self.model.transform = tr.matmul([
@@ -128,7 +129,7 @@ class Person(object):
     def death(self):
         global time
         if self.status == 1:
-            if time / 50 - self.day_zero >= self.parameters["days_to_heal"]:
+            if time / self.iterations - self.day_zero >= self.parameters["days_to_heal"]:
                 self.status = 3
             else:
                 self.status = 1 + bernoulli.rvs(self.parameters["death_rate"])
@@ -159,7 +160,7 @@ class Person(object):
 
     def set_day_zero(self):
         global time
-        self.day_zero = time / 50 + 1
+        self.day_zero = time / self.iterations + 1
 
     def circular_flow(self, om=1):
         global time
@@ -409,13 +410,24 @@ class Background(object):
         self.bound = bound
         self.bars = []
         self.buttons = []
+        self.graphs = []
+
         self.model = squares
         for i, c in enumerate(list(color_dict.keys())[:4]):
-            self.set_percent_bar(color=c, center=(-0.5, (2-i) * 0.05 + 0.025 + 0.5))
+            self.set_percent_bar(color=c, center=(0.318, (2-i) * 0.05 + 0.025 + 0.75))
 
         self.set_percent_bar(color='w', center=(0.7, 0))
 
-        self.set_button(active=0, center=(0, 0.5))
+        self.set_percent_bar(color='r', center=(-0.5, -0.5))
+
+        self.set_button(active=0, center=(0.3, 0.5))
+
+        self.set_graph(size=(1.0, 0.4), center=(-0.4, 0.5))
+
+        self.graphs[0].plot([], 'g')
+        self.graphs[0].plot([], 'r')
+        self.graphs[0].plot([], 'grey')
+        self.graphs[0].plot([], 'b')
 
     def draw(self, pipeline):
         glUseProgram(pipeline.shaderProgram)
@@ -433,10 +445,13 @@ class Background(object):
 
     def update(self):
         pop = self.populations[self.select]
-        for i, b in enumerate(self.bars[:-1]):
+        for i, b in enumerate(self.bars[:4]):
             b.set(pop.count[i][-1] / pop.size)
 
-        self.bars[-1].set((time % 50)/50)
+        ite = Person.iterations
+        self.bars[4].set((time % ite)/ite)
+
+        self.bars[5].set(Person.parameters['prob_inf'] * ite)
 
         pop.show_data(self.select+1)
 
@@ -450,6 +465,11 @@ class Background(object):
             tr.scale(1 / aspect_ratio, 1, 1)
         ])
 
+    def set_graph(self, size=(0.5, 0.3), center=(-0.5, -0.5)):
+        g = GraphMath(size, center)
+        self.graphs.append(g)
+        self.model.childs += [g.get()]
+
 
 class PercentBar(object):
 
@@ -459,6 +479,7 @@ class PercentBar(object):
         out_bar_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
 
         out_bar = sg.SceneGraphNode('out_bar')
+
         out_bar.childs += [out_bar_gpu]
 
         in_bar = sg.SceneGraphNode('in_bar')
@@ -527,6 +548,82 @@ class Button(object):
 
     def get(self):
         return self.model
+
+
+class GraphMath(object):
+
+    def __init__(self, size, center):
+        self.size = size
+        self.center = center
+        back_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
+        line_gpu_dict = {}
+        for color in color_dict.keys():
+            line_gpu_dict[color] = es.toGPUShape(apply_tuple(bs.createColorQuad)(color_dict[color]))
+
+        back = sg.SceneGraphNode('back')
+        back.transform = tr.uniformScale(2)
+        back.childs += [back_gpu]
+
+        size = size[0], size[1], 1
+        center = center[0], center[1], 0
+
+        graph = sg.SceneGraphNode('graph')
+        graph.transform = tr.matmul([
+            apply_tuple(tr.translate)(center),
+            apply_tuple(tr.scale)(size),
+            tr.scale(1 / aspect_ratio, 1, 1)
+        ])
+        graph.childs += [back]
+
+        self.line_gpu_dict = line_gpu_dict
+
+        self.plots = []
+        self.model = graph
+
+    def get(self):
+        return self.model
+
+    def plot(self, x, color='g'):
+        plot = sg.SceneGraphNode('plot')
+        n = len(x)
+
+        alpha = 2 / (n-1)
+        for i in range(n-1):
+            xi = x[i] / 50 - 1
+            xi1 = x[i + 1] / 50 - 1
+            theta = np.arctan2(xi1-xi, alpha)
+            lx = get_norm(get_dif((0, xi), (alpha, xi1)))
+            subline = sg.SceneGraphNode(f'subline_{i}')
+            subline.transform = tr.matmul([
+                tr.translate(i*alpha - 1, xi, 0),
+                tr.rotationZ(theta),
+                tr.translate(lx / 2, 0, 0),
+                tr.scale(lx, 0.005, 1)
+            ])
+            subline.childs += [self.line_gpu_dict[color]]
+            plot.childs += [subline]
+
+        self.plots.append(plot)
+        self.model.childs = [plot] + self.model.childs
+
+    def update_plot(self, plot, x, color='g'):
+        n = len(x)
+        alpha = 2 / (n - 1)
+        plot.childs = []
+        for i in range(n - 2):
+            xi = x[i] / 50 - 1
+            xi1 = x[i + 1] / 50 - 1
+            theta = np.arctan2(xi1-xi, alpha)
+            lx = get_norm(get_dif((0, xi), (alpha, xi1)))
+            subline = sg.SceneGraphNode(f'subline_{i}')
+            subline.transform = tr.matmul([
+                tr.translate(i*alpha - 1, xi, 0),
+                tr.rotationZ(theta),
+                tr.translate(lx / 2, 0, 0),
+                tr.scale(lx, 0.008, 1)
+            ])
+            subline.childs += [self.line_gpu_dict[color]]
+            plot.childs += [subline]
 
 
 def get_dif(vec1, vec2):

@@ -15,6 +15,7 @@ class Controller(object):
         self.community: Community
         self.background: Background
         self.binary_value = True
+        self.parameter = 'ESC'
 
     def on_key(self, window, key, scancode, action, mods):
         if not (action == glfw.PRESS):
@@ -33,19 +34,27 @@ class Controller(object):
             self.binary_value = not self.binary_value
             print(f'advance time (one day)!')
 
-        if key == glfw.KEY_R:
+        if key == glfw.KEY_X:
             population = self.community.get_populations()[self.background.select]
             population.restart()
             print(f'restart simulation!')
 
+        if key == glfw.KEY_V:
+            print('vista distancia social')
+
         if key == glfw.KEY_P:
+            graph = self.background.graphs[0]
+            pop = self.background.populations[self.background.select]
+            for i, plot in enumerate(graph.plots):
+                graph.update_plot(plot, pop.count[i], list(color_dict.keys())[i])
+
             fig, aux = plt.subplots(figsize=(10, 5))
             population = self.community.get_populations()[self.background.select]
             aux.plot(population.count[0], color='g', label='sanos')
             aux.plot(population.count[1], color='r', label='infectados')
             aux.plot(population.count[2], color='grey', label='muertos')
             aux.plot(population.count[3], color='b', label='recuperados')
-            aux.set_xlabel('Tiempo [iter: 50 iter = 1 dia]')
+            aux.set_xlabel(f'Tiempo [ite: {Person.iterations} ite = 1 dia]')
             aux.set_ylabel('Individuos [#]')
             aux.set_ylim(0, population.size)
             aux.set_title(f'Estado población #{self.background.select+1}')
@@ -64,6 +73,26 @@ class Controller(object):
             self.background.buttons[0].set(int(self.community.get_populations()[1].social_distance))
             print('select #2')
 
+        if key == glfw.KEY_I:
+            self.parameter = 'I'
+
+
+
+        if key == glfw.KEY_KP_ADD:
+            if self.parameter == 'I':
+                ite = Person.iterations
+                prob = Person.parameters['prob_inf'] * ite
+                Person.parameters['prob_inf'] += 0.05 / ite if (1 >= prob + 0.05) else (1-prob)/ ite
+
+        if key == glfw.KEY_KP_SUBTRACT:
+            if self.parameter == 'I':
+                ite = Person.iterations
+                prob = Person.parameters['prob_inf'] * ite
+                Person.parameters['prob_inf'] += - 0.05 / ite if (prob - 0.05 >= 0) else (0-prob)/ ite
+
+        if key == glfw.KEY_ESCAPE:
+            self.parameter = 'ESC'
+
     def set_community(self, community):
         self.community = community
 
@@ -71,6 +100,7 @@ class Controller(object):
         self.background = background
 
     def on_scroll(self, window, pos, action):
-        prob = Person.parameters["prob_inf"] * Person.iterations
-        Person.parameters["prob_inf"] += action * 0.1/Person.iterations if (1 >= prob + action * 0.1 >= 0) else 0
-        print(Person.parameters["prob_inf"] * Person.iterations)
+        ite = Person.iterations
+        prob = Person.parameters["prob_inf"] * ite
+        Person.parameters["prob_inf"] += action * 0.1/ite if (1 >= prob + action * 0.1 >= 0) else 0
+        print(Person.parameters["prob_inf"] * ite)
