@@ -34,7 +34,7 @@ disminuir           # Key -
     "Radius": 0.1,
     "Contagious_prob": 0.2,
     "Death_rate": 0.1,
-    "Initial_population": 1000,
+    "Initial_population": 200,
     "Days_to_heal": 5
   }
 ]
