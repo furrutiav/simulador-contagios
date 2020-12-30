@@ -22,7 +22,7 @@ radius              # set Key R
 death rate          # set Key D
 days to heal        # set Key H
 
-aumentar            $ Key +
+aumentar            # Key +
 disminuir           # Key -
 ```
 ### Inicio
