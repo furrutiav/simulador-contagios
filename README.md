@@ -21,6 +21,7 @@ prob infeccion      # set Key I
 radius              # set Key R
 death rate          # set Key D
 days to heal        # set Key H
+ratio social distance # set Key A
 
 aumentar            # Key +
 disminuir           # Key -
