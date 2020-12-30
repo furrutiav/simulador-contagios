@@ -13,7 +13,7 @@ if __name__ == '__main__':
     if not glfw.init():
         sys.exit()
     window = glfw.create_window(
-        width, height, 'Simulador Contagios; Autor: F. Urrutia V.', None, None)
+        width, height, name, None, None)
 
     if not window:
         glfw.terminate()

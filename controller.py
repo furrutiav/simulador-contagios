@@ -83,6 +83,9 @@ class Controller(object):
         if key == glfw.KEY_H:
             self.parameter = 'H'
 
+        if key == glfw.KEY_A:
+            self.parameter = 'A'
+
         if key == glfw.KEY_KP_ADD:
             if self.parameter == 'I':
                 ite = Person.iterations
@@ -102,6 +105,13 @@ class Controller(object):
                 days = Person.parameters['days_to_heal']
                 Person.parameters['days_to_heal'] += 1 if (14 >= days + 1) else (14 - days)
 
+            if self.parameter == 'A':
+                ratio = Person.parameters['ratio_social_distance']
+                Person.parameters['ratio_social_distance'] += 0.05 if (1 >= ratio + 0.05) else (1 - ratio)
+                pop = self.community.get_populations()[self.background.select]
+                pop.update_social_distance(status='+')
+                pop.view_social_distance(self.view)
+
         if key == glfw.KEY_KP_SUBTRACT:
             if self.parameter == 'I':
                 ite = Person.iterations
@@ -120,6 +130,13 @@ class Controller(object):
             if self.parameter == 'H':
                 days = Person.parameters['days_to_heal']
                 Person.parameters['days_to_heal'] += -1 if (days - 1 >= 0) else (0 - days)
+
+            if self.parameter == 'A':
+                ratio = Person.parameters['ratio_social_distance']
+                Person.parameters['ratio_social_distance'] += -0.05 if (ratio - 0.05 >= 0) else (0 - ratio)
+                pop = self.community.get_populations()[self.background.select]
+                pop.update_social_distance(status='-')
+                pop.view_social_distance(self.view)
 
         if key == glfw.KEY_V:
             pop = self.community.get_populations()[self.background.select]

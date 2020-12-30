@@ -26,6 +26,7 @@ color_dict = {'g': (0, 1, 0), 'r': (1, 0, 0), 'grey': (0.4, 0.4, 0.4),
 
 width, height = int(1920 * 0.8), int(1080 * 0.8)
 aspect_ratio = width / height
+name = 'Simulador Contagios; Autor: F. Urrutia V.'
 
 
 class Builder(object):
@@ -58,12 +59,12 @@ class Person(object):
         "radius": data_virus['Radius'],
         "death_rate": data_virus['Death_rate'] / iterations,
         "days_to_heal": data_virus['Days_to_heal'],
-        "prob_social_distance": 0.5
+        "ratio_social_distance": 0.5
 
     }
 
     def __init__(self, builder, index, group=0):
-        self.social_distance = bernoulli.rvs(self.parameters["prob_social_distance"])
+        self.social_distance = bernoulli.rvs(self.parameters["ratio_social_distance"])
         self.index = index
         self.group = group
         self.log_pos = tuple([[np.random.normal(0, 0.2) for _ in range(2)],
@@ -177,6 +178,9 @@ class Person(object):
             self.model.childs = [self.builder.get_graph()[4+self.social_distance]]
         else:
             self.model.childs = [self.builder.get_graph()[self.status]]
+
+    def update_social_distance(self):
+        self.social_distance = bernoulli.rvs(self.parameters["ratio_social_distance"])
 
 
 class Population(object):
@@ -350,6 +354,13 @@ class Population(object):
         for person in self.people:
             person.view_social_distance(active)
 
+    def update_social_distance(self, status='+'):
+        for person in self.people:
+            if person.social_distance == 0 and status == '+':
+                person.update_social_distance()
+            elif person.social_distance == 1 and status == '-':
+                person.update_social_distance()
+
 
 class Community(object):
     def __init__(self, pop1, pop2):
@@ -440,6 +451,8 @@ class Background(object):
 
         self.set_button(active=0, center=(0.3, 0.5))
 
+        self.set_percent_bar(color='cian', center=(0.3, 0.5 - 0.1))
+
         self.set_graph(size=(1.0, 0.4), center=(-0.4, 0.5))
 
         self.graphs[0].plot([], 'g')
@@ -476,6 +489,8 @@ class Background(object):
         self.bars[7].set(Person.parameters['death_rate'] * ite)
 
         self.bars[8].set(Person.parameters['days_to_heal']/14)
+
+        self.bars[9].set(Person.parameters['ratio_social_distance'])
 
         pop.show_data(self.select+1)
 
