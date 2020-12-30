@@ -29,9 +29,15 @@ disminuir           # Key -
 ### Inicio
 ...
 ```python
-b = Builder()
-pop1 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, 0.5))
-pop2 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, -0.5))
+[
+  {
+    "Radius": 0.1,
+    "Contagious_prob": 0.2,
+    "Death_rate": 0.1,
+    "Initial_population": 1000,
+    "Days_to_heal": 5
+  }
+]
 ```
 ### Interfaz (Terminal)
 ...
