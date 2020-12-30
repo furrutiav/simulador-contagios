@@ -655,13 +655,13 @@ class GraphMath(object):
         self.plots.append(plot)
         self.model.childs = [plot] + self.model.childs
 
-    def update_plot(self, plot, x, color='g'):
+    def update_plot(self, plot, x, color='g', pop_size=100):
         n = len(x)
         alpha = 2 / (n - 1)
         plot.childs = []
         for i in range(n - 2):
-            xi = x[i] / 50 - 1
-            xi1 = x[i + 1] / 50 - 1
+            xi = 2 * x[i] / pop_size - 1
+            xi1 = 2 * x[i + 1] / pop_size - 1
             theta = np.arctan2(xi1-xi, alpha)
             lx = get_norm(get_dif((0, xi), (alpha, xi1)))
             subline = sg.SceneGraphNode(f'subline_{i}')

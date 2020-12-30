@@ -45,7 +45,7 @@ class Controller(object):
             graph = self.background.graphs[0]
             pop = self.background.populations[self.background.select]
             for i, plot in enumerate(graph.plots):
-                graph.update_plot(plot, pop.count[i], list(color_dict.keys())[i])
+                graph.update_plot(plot, pop.count[i], list(color_dict.keys())[i], max(pop.size, 100))
 
             fig, aux = plt.subplots(figsize=(10, 5))
             population = self.community.get_populations()[self.background.select]
