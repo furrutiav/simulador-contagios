@@ -13,7 +13,7 @@ scipy     # distribuciones de probabilidad
 ```bash
 distancia social    # Key S
 avanzar un dia      # Key Right
-restart simulation  # Key R
+restart simulation  # Key X
 info                # Key P
 seleccion           # Press Key 1 or 2
 
