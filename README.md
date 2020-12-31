@@ -1,5 +1,5 @@
 # simulador-contagios 🚧
-Proyecto personal, utilizando OpenGL para python 3, de un simulador de contagios entre dos poblaciones con aplicacion de medidad preventivas (cuarentena y/o distancia social) en tiempo real a partir de un virus personalizado modificable (probabilidad de infeccion y muerte, radio de contagio, dias de recuperacion, etc.) durante la simulacion.
+Proyecto personal, utilizando OpenGL para python 3, de un simulador de contagios entre dos poblaciones con aplicacion de medidad preventivas (cuarentena, distancia social y/o cierre de fronteras) en tiempo real a partir de un virus personalizado modificable (probabilidad de infeccion y muerte, radio de contagio, dias de recuperacion, etc.) durante la simulacion.
 ### Pre-requisitos
 Para comenzar es necesario pre-instalar las siguientes librerias para python: [glfw](https://pypi.org/project/glfw/), [pyopengl](https://pypi.org/project/PyOpenGL/), [numpy](https://pypi.org/project/numpy/), [pillow](https://pypi.org/project/Pillow/), [scipy](https://pypi.org/project/scipy/), [matplotlib](https://pypi.org/project/matplotlib/)
 ```bash
