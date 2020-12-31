@@ -92,10 +92,7 @@ if __name__ == '__main__':
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
             C.draw(pipeline_pol_2d)
-            B.draw(pipeline_pol_2d, pipeline_tx_2d)
+            B.draw(pipeline_pol_2d, pipeline_tx_2d, status='static')
 
         glfw.swap_buffers(window)
-
-
-
     glfw.terminate()

@@ -540,8 +540,9 @@ class Background(object):
 
         self.model_tx = back
 
-        self.model_static = None
-        self.model_dynamic = None
+        static = sg.SceneGraphNode('static')
+
+        self.model_static = static
 
         x_info = -0.29
         y_info = 0.33
@@ -577,10 +578,11 @@ class Background(object):
         self.graphs[0].plot([], 'grey')
         self.graphs[0].plot([], 'b')
 
-    def draw(self, pipeline, pipeline_tx):
+    def draw(self, pipeline, pipeline_tx, status='dynamic'):
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
-
+        if status == 'static':
+            sg.drawSceneGraphNode(self.model_static, pipeline, transformName='transform')
         glUseProgram(pipeline_tx.shaderProgram)
         sg.drawSceneGraphNode(self.model_tx, pipeline_tx, transformName='transform')
 
@@ -632,7 +634,7 @@ class Background(object):
     def set_graph(self, size=(0.5, 0.3), center=(-0.5, -0.5)):
         g = GraphMath(size, center)
         self.graphs.append(g)
-        self.model.childs += [g.get()]
+        self.model_static.childs += [g.get()]
 
 
 class PercentBar(object):
