@@ -11,24 +11,24 @@ scipy     # (stats) distribuciones de probabilidad
 ### Controles
 ...
 ```bash
-distancia social    # Key S
-migrar random       # Key M
-avanzar un dia      # Key Right
-restart simulation  # Key X
-info                # Key P
-cuarentena          # Key C
+distancia social        # Key S
+migrar random           # Key M
+avanzar un dia          # Key Right
+reiniciar simulación    # Key X
+plot/terminar           # Key P
+cuarentena              # Key C
 vista distancia social  # Key V
-seleccion           # Press Key 1 or 2
+seleccion               # Press Key 1 or 2
 
-prob infeccion      # set Key I
-radius              # set Key R
-death rate          # set Key D
-days to heal        # set Key H
-ratio social distance # set Key A
-days to quarantine  # set Key Q
+prob. infeccion         # set Key I
+radio contagio          # set Key R
+prob. muerte            # set Key D
+dias para recuperarse   # set Key H
+prob. distancia social  # set Key A
+dias para cuarentena    # set Key Q
 
-aumentar            # Key +
-disminuir           # Key -
+aumentar                # Key +
+disminuir               # Key -
 ```
 ### Inicio
 ...
@@ -51,10 +51,10 @@ disminuir           # Key -
 ### Estados
 ...
 ```bash
-sano        # verde
-infectado   # rojo
-muerto      # gris
-recuperado  # azul
+sano                  # verde
+infectado             # rojo
+muerto                # gris
+recuperado            # azul
 
 CON distancia social  # cian
 SIN distancia social  # amarillo
