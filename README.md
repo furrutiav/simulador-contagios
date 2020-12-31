@@ -18,7 +18,7 @@ reiniciar simulación    # Key X
 plot/terminar           # Key P
 cuarentena              # Key C
 vista distancia social  # Key V
-seleccion               # Press Key 1 or 2
+seleccion               # Key 1 or 2
 
 prob. infeccion         # set Key I
 radio contagio          # set Key R
@@ -29,6 +29,7 @@ dias para cuarentena    # set Key Q
 
 aumentar                # Key +
 disminuir               # Key -
+salir editor            # Key Escape
 ```
 ### Inicio
 ...
