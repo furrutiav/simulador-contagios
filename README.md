@@ -17,7 +17,6 @@ avanzar un dia      # Key Right
 restart simulation  # Key X
 info                # Key P
 cuarentena          # Key C
-viajes              # Key M
 vista distancia social  # Key V
 seleccion           # Press Key 1 or 2
 
