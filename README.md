@@ -55,6 +55,7 @@ salir editor            # Key Escape
 ```bash
 > [2] sanos: 34, infectados: 36, muertos: 13, recuperados: 17
 ```
+![alt text](/img/example.png)
 ### Estados
 ...
 ```bash
