@@ -16,6 +16,8 @@ migrar random       # Key M
 avanzar un dia      # Key Right
 restart simulation  # Key X
 info                # Key P
+cuarentena          # Key C
+viajes              # Key M
 seleccion           # Press Key 1 or 2
 
 prob infeccion      # set Key I
@@ -23,6 +25,7 @@ radius              # set Key R
 death rate          # set Key D
 days to heal        # set Key H
 ratio social distance # set Key A
+days to quarantine  # set Key Q
 
 aumentar            # Key +
 disminuir           # Key -
@@ -52,4 +55,7 @@ sano        # verde
 infectado   # rojo
 muerto      # gris
 recuperado  # azul
+
+CON distancia social  # cian
+SIN distancia social  # amarillo
 ```
