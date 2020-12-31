@@ -9,11 +9,8 @@ import numpy as np
 from OpenGL.GL import *
 import random as rd
 from scipy.stats import bernoulli, norm, uniform
-from scipy.spatial import distance
 from typing import Union, List, Any
 import json
-from multiprocessing import Process, Pool
-from numba import njit, prange
 
 # load virus
 virus = open('virus.json')
@@ -27,6 +24,8 @@ color_dict = {'g': (0, 1, 0), 'r': (1, 0, 0), 'grey': (0.4, 0.4, 0.4),
 width, height = int(1920 * 0.8), int(1080 * 0.8)
 aspect_ratio = width / height
 name = 'Simulador Contagios; Autor: F. Urrutia V.'
+
+size1, size2 = [int(data_virus['Initial_population'] / 2) for _ in range(2)]
 
 
 class Builder(object):
@@ -59,11 +58,13 @@ class Person(object):
         "radius": data_virus['Radius'],
         "death_rate": data_virus['Death_rate'] / iterations,
         "days_to_heal": data_virus['Days_to_heal'],
-        "ratio_social_distance": 0.5
+        "ratio_social_distance": 0.5,
+        "days_to_quarantine": 1,
 
     }
 
-    def __init__(self, builder, index, group=0):
+    def __init__(self, builder, index, group=0, population_index=0):
+        self.population_index = population_index
         self.social_distance = bernoulli.rvs(self.parameters["ratio_social_distance"])
         self.index = index
         self.group = group
@@ -87,20 +88,20 @@ class Person(object):
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
 
-    def update_pos(self):
+    def update_pos(self, bound=1):
         global time
         flow = [self.circular_flow(2), self.circular_flow(-1)][self.group]
         new_pos = [np.random.normal(0.01 * flow[i], 0.005) + self.log_pos[i] for i in range(2)]
-        if -1 < new_pos[0] < 1 and -1 < new_pos[1] < 1:
+        if -bound < new_pos[0] < bound and -bound < new_pos[1] < bound:
             self.log_pos = new_pos
         self.model.transform = tr.matmul([
             tr.translate(self.log_pos[0], self.log_pos[1], 0),
             tr.uniformScale(1 / 50)
         ])
 
-    def update_status(self, other=None, dif=(0, 0)):
+    def update_status(self, other=None, dif=(0, 0), community=None):
         aux = self.status
-        self.death()
+        self.death(community=community)
         if other:
             self.infect(other, dif)
         if aux != self.status:
@@ -129,9 +130,14 @@ class Person(object):
                         if -1 < new_pos[0] < 1 and -1 < new_pos[1] < 1:
                             other.log_pos = new_pos
 
-    def death(self):
+    def death(self, community=None):
         global time
         if self.status == 1:
+            if community:
+                pop = community.get_populations()[self.population_index]
+                if pop.quarantine and time / self.iterations - self.day_zero >= self.parameters["days_to_quarantine"]:
+                    quar = community.QUAR
+                    pop.quar_move(self, quar)
             if time / self.iterations - self.day_zero >= self.parameters["days_to_heal"]:
                 self.status = 3
             else:
@@ -182,44 +188,52 @@ class Person(object):
     def update_social_distance(self):
         self.social_distance = bernoulli.rvs(self.parameters["ratio_social_distance"])
 
-    def from_move_to(self, pop_out, pop_in):
-        pop_out.size += -1
-        pop_in.size += 1
+    def from_move_to(self, pop_out, pop_in, status):
+        if status == 'p':
+            pop_out.size += -1
+            pop_in.size += 1
 
-        pop_out.people.remove(self)
-        pop_in.people.append(self)
+            pop_out.people.remove(self)
+            pop_in.people.append(self)
+
+            if self.status == 0:
+                pop_out.s_people.remove(self)
+                pop_in.s_people.append(self)
+            elif self.status == 1:
+                pop_out.i_people.remove(self)
+                pop_in.i_people.append(self)
+            elif self.status == 2:
+                pop_out.d_people.remove(self)
+                pop_in.d_people.append(self)
+            elif self.status == 3:
+                pop_out.r_people.remove(self)
+                pop_in.r_people.append(self)
+
+            for person in pop_in.people:
+                person.set_visited(pop_in.size)
+
+            for person in pop_out.people:
+                person.set_visited(pop_out.size)
+
+        elif status == 'q':
+            pop_in.people.append(self)
+            pop_out.q_people.append(self)
+
+            self.log_pos = [np.random.normal(0, 0.1) for _ in range(2)]
 
         pop_out.model.childs.remove(self.model)
         pop_in.model.childs.append(self.model)
 
-        if self.status == 0:
-            pop_out.s_people.remove(self)
-            pop_in.s_people.append(self)
-        elif self.status == 1:
-            pop_out.i_people.remove(self)
-            pop_in.i_people.append(self)
-        elif self.status == 2:
-            pop_out.d_people.remove(self)
-            pop_in.d_people.append(self)
-        elif self.status == 3:
-            pop_out.r_people.remove(self)
-            pop_in.r_people.append(self)
-
-        for person in pop_in.people:
-            person.set_visited(pop_in.size)
-
-        for person in pop_out.people:
-            person.set_visited(pop_out.size)
-
 
 class Population(object):
 
-    def __init__(self, builder, size, social_distance=False, groups=1, view_center=(0, 0)):
+    def __init__(self, builder, size, social_distance=False, quarantine=False, groups=1, view_center=(0, 0), index=0):
         self.builder = builder
         self.groups = groups
         self.size = size
         self.social_distance = social_distance
         self.view_center = view_center
+        self.quarantine = quarantine
 
         root = sg.SceneGraphNode('root')
         root.transform = tr.matmul([
@@ -234,8 +248,9 @@ class Population(object):
         self.i_people = []
         self.d_people = []
         self.r_people = []
+        self.q_people = []
         for k in range(size):
-            person_k = Person(builder, k, 0) if k < size / groups else Person(builder, k, 1)
+            person_k = Person(builder, k, 0, index) if k < size / groups else Person(builder, k, 1, index)
             person_k.set_visited(size)
             if person_k.get_status():
                 self.i_people.append(person_k)
@@ -253,16 +268,16 @@ class Population(object):
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
 
-    def update_grid_smart(self, mode=3):
+    def update_grid_smart(self, mode=3, community=None):
         s_people = self.s_people
         i_people = self.i_people
         d_people = self.d_people
         r_people = self.r_people
         active = self.social_distance
         for p_index, person in enumerate(self.people):
-            if (not person.is_visited(p_index)) and (person.get_status() in [0, 1, 3]):
+            if not (person.is_visited(p_index) or person in self.q_people) and (person.get_status() in [0, 1, 3]):
                 if person.get_status() == 1:
-                    person.update_status()
+                    person.update_status(community=community)
                     if person.get_status() == 3:
                         r_people += [person]
                         i_people.remove(person)
@@ -277,7 +292,7 @@ class Population(object):
                 p_log_pos = person.get_log_pos()
                 cell = get_individual_n_grid(mode, p_log_pos)
                 for p2_index, person2 in enumerate(self.people):
-                    if not person.is_visited(p2_index):
+                    if not (person.is_visited(p2_index) or person2 in self.q_people):
                         person.set_visit(p2_index)
                         person2.set_visit(p_index)
                         if person2.is_cell(cell):
@@ -311,9 +326,9 @@ class Population(object):
         for index, people in enumerate([self.s_people, self.i_people, self.d_people, self.r_people]):
             self.count[index].append(len(people))
 
-    def update(self, pause=False):
+    def update(self, community, pause=False):
         if not pause:
-            self.update_grid_smart()
+            self.update_grid_smart(community=community)
 
     def show_data(self, label=''):
         global time
@@ -341,6 +356,7 @@ class Population(object):
         self.i_people = []
         self.d_people = []
         self.r_people = []
+        self.q_people = []
         for k in range(self.size):
             person_k = Person(self.builder, k, 0) if k < self.size / self.groups else Person(self.builder, k, 1)
             person_k.set_visited(self.size)
@@ -364,23 +380,34 @@ class Population(object):
             elif person.social_distance == 1 and status == '-':
                 person.update_social_distance()
 
-    def move_to(self, person, pop):
-        person.from_move_to(self, pop)
+    def move_to(self, person, pop, status):
+        person.from_move_to(self, pop, status)
 
     def rand_move(self, pop):
         person = rd.choice(self.people)
-        self.move_to(person, pop)
+        self.move_to(person, pop, 'p')
+
+    def rand_quar_move(self, quar):
+        list_choice = list(set(self.i_people)-set(self.q_people))
+        if list_choice:
+            person = rd.choice(list_choice)
+            self.move_to(person, quar, 'q')
+
+    def quar_move(self, person, quar):
+        self.move_to(person, quar, 'q')
 
 
 class Community(object):
-    def __init__(self, pop1, pop2):
+    def __init__(self, pop1, pop2, quar):
         self.pop1 = pop1
         self.pop2 = pop2
+        self.QUAR = quar
 
     def update(self, pause):
         global time
         for _, pop in enumerate([self.pop1, self.pop2]):
-            pop.update(pause)
+            pop.update(self, pause)
+        self.QUAR.update()
         time += 1
 
     def update_forward(self):
@@ -393,8 +420,39 @@ class Community(object):
         for _, pop in enumerate([self.pop1, self.pop2]):
             pop.draw(pipeline)
 
+        self.QUAR.draw(pipeline)
+
     def get_populations(self):
         return [self.pop1, self.pop2]
+
+
+class QuarantineZone(object):
+    def __init__(self, bound, view_center=(0, 0)):
+        self.view_center = view_center
+        self.bound = bound
+
+        root = sg.SceneGraphNode('root')
+        root.transform = tr.matmul([
+            tr.translate(view_center[0], view_center[1], 0),
+            tr.uniformScale(0.4),
+            tr.scale(1 / aspect_ratio, 1, 1)
+        ])
+        root.childs = []
+
+        self.people = []
+
+        self.model = root
+
+    def draw(self, pipeline):
+        glUseProgram(pipeline.shaderProgram)
+        sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
+
+    def update(self):
+        for person in self.people:
+            if person.get_status() in [1, 3]:
+                person.update_pos(self.bound)
+                if person.get_status() == 1:
+                    person.update_status()
 
 
 class Background(object):
@@ -402,7 +460,8 @@ class Background(object):
         self.community = community
         self.select = 0
 
-        self.populations = self.community.get_populations()
+        self.populations = community.get_populations()
+        self.QUAR = community.QUAR
 
         square_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
         bound_gpu = es.toGPUShape(bs.createColorQuad(1, 1, 1))
@@ -437,8 +496,18 @@ class Background(object):
         ])
         square2.childs += [square_gpu]
 
+        view_center3 = self.QUAR.view_center[0], self.QUAR.view_center[1], 0
+
+        square3 = sg.SceneGraphNode('square2')
+        square3.transform = tr.matmul([
+            apply_tuple(tr.translate)(view_center3),
+            tr.uniformScale(0.8 * self.QUAR.bound),
+            tr.scale(1 / aspect_ratio, 1, 1)
+        ])
+        square3.childs += [square_gpu]
+
         squares = sg.SceneGraphNode('squares')
-        squares.childs += [square1, square2, bound]
+        squares.childs += [square1, square2, square3, bound]
 
         self.bound = bound
         self.bars = []
@@ -446,24 +515,29 @@ class Background(object):
         self.graphs = []
 
         self.model = squares
+
+        self.model_static = None
+        self.model_dynamic = None
+
         for i, c in enumerate(list(color_dict.keys())[:4]):
             self.set_percent_bar(color=c, center=(0.318, (2-i) * 0.05 + 0.025 + 0.75))
 
-        self.set_percent_bar(color='w', center=(0.7, 0))
+        self.set_percent_bar(color='w', center=(0, 0.88))
 
-        self.set_percent_bar(color='r', center=(-0.5, -0.5))
-
-        self.set_percent_bar(color='y', center=(-0.5, -0.5-0.05))
-
-        self.set_percent_bar(color='grey', center=(-0.5, -0.5-0.1))
-
-        self.set_percent_bar(color='b', center=(-0.5, -0.5-0.15))
+        x_settings = 0.318
+        y_settings = -0.5
+        for i, c in enumerate(['r', 'y', 'grey', 'b']):
+            self.set_percent_bar(color=c, center=(x_settings, y_settings-0.05*i))
 
         self.set_button(active=0, center=(0.318, 0.5))
 
         self.set_percent_bar(color='cian', center=(0.318, 0.5 - 0.1))
 
-        self.set_graph(size=(1.0, 0.4), center=(-0.4, 0.5))
+        self.set_button(color='r', active=0, center=(0.318, 0.5-0.2))
+
+        self.set_percent_bar(color='r', center=(0.318, 0.5 - 0.3))
+
+        self.set_graph(size=(1.0, 0.4), center=(-0.4, -0.5))
 
         self.graphs[0].plot([], 'g')
         self.graphs[0].plot([], 'r')
@@ -501,6 +575,8 @@ class Background(object):
         self.bars[8].set(Person.parameters['days_to_heal']/14)
 
         self.bars[9].set(Person.parameters['ratio_social_distance'])
+
+        self.bars[10].set(Person.parameters['days_to_quarantine']/14)
 
         pop.show_data(self.select+1)
 

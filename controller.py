@@ -48,28 +48,31 @@ class Controller(object):
                 graph.update_plot(plot, pop.count[i], list(color_dict.keys())[i], max(pop.size, 100))
 
             fig, aux = plt.subplots(figsize=(10, 5))
-            population = self.community.get_populations()[self.background.select]
-            aux.plot(population.count[0], color='g', label='sanos')
-            aux.plot(population.count[1], color='r', label='infectados')
-            aux.plot(population.count[2], color='grey', label='muertos')
-            aux.plot(population.count[3], color='b', label='recuperados')
+            aux.plot(pop.count[0], color='g', label='sanos')
+            aux.plot(pop.count[1], color='r', label='infectados')
+            aux.plot(pop.count[2], color='grey', label='muertos')
+            aux.plot(pop.count[3], color='b', label='recuperados')
             aux.set_xlabel(f'Tiempo [ite: {Person.iterations} ite = 1 dia]')
             aux.set_ylabel('Individuos [#]')
-            aux.set_ylim(0, population.size)
+            aux.set_ylim(0, max(pop.size, 100))
             aux.set_title(f'Estado población #{self.background.select+1}')
             aux.grid()
             aux.legend()
             plt.subplots_adjust(wspace=0, hspace=0)
             plt.show()
 
-        if key == glfw.KEY_1 or key == glfw.KEY_UP:
+        if key == glfw.KEY_1:
             self.background.set_select(0)
-            self.background.buttons[0].set(int(self.community.get_populations()[0].social_distance))
+            population = self.community.get_populations()[self.background.select]
+            self.background.buttons[0].set(int(population.social_distance))
+            self.background.buttons[1].set(int(population.quarantine))
             print('select #1')
 
-        if key == glfw.KEY_2 or key == glfw.KEY_DOWN:
+        if key == glfw.KEY_2:
             self.background.set_select(1)
-            self.background.buttons[0].set(int(self.community.get_populations()[1].social_distance))
+            population = self.community.get_populations()[self.background.select]
+            self.background.buttons[0].set(int(population.social_distance))
+            self.background.buttons[1].set(int(population.quarantine))
             print('select #2')
 
         if key == glfw.KEY_I:
@@ -86,6 +89,9 @@ class Controller(object):
 
         if key == glfw.KEY_A:
             self.parameter = 'A'
+
+        if key == glfw.KEY_Q:
+            self.parameter = 'Q'
 
         if key == glfw.KEY_KP_ADD:
             if self.parameter == 'I':
@@ -113,6 +119,10 @@ class Controller(object):
                 pop.update_social_distance(status='+')
                 pop.view_social_distance(self.view)
 
+            if self.parameter == 'Q':
+                days = Person.parameters['days_to_quarantine']
+                Person.parameters['days_to_quarantine'] += 1 if (14 >= days + 1) else (14 - days)
+
         if key == glfw.KEY_KP_SUBTRACT:
             if self.parameter == 'I':
                 ite = Person.iterations
@@ -126,7 +136,7 @@ class Controller(object):
             if self.parameter == 'D':
                 ite = Person.iterations
                 death_rate = Person.parameters['death_rate'] * ite
-                Person.parameters['death_rate'] += - 0.05 / ite if (death_rate + 0.05 >= 0) else (0-death_rate)/ite
+                Person.parameters['death_rate'] += - 0.05 / ite if (death_rate - 0.05 >= 0) else (0-death_rate)/ite
 
             if self.parameter == 'H':
                 days = Person.parameters['days_to_heal']
@@ -138,6 +148,10 @@ class Controller(object):
                 pop = self.community.get_populations()[self.background.select]
                 pop.update_social_distance(status='-')
                 pop.view_social_distance(self.view)
+
+            if self.parameter == 'Q':
+                days = Person.parameters['days_to_quarantine']
+                Person.parameters['days_to_quarantine'] += -1 if (days - 1 >= 0) else (0 - days)
 
         if key == glfw.KEY_V:
             pop = self.community.get_populations()[self.background.select]
@@ -154,6 +168,12 @@ class Controller(object):
             pop = self.community.get_populations()[s]
             pop_ = self.community.get_populations()[(s+1) % 2]
             pop.rand_move(pop_)
+
+        if key == glfw.KEY_C:
+            population = self.community.get_populations()[self.background.select]
+            population.quarantine = not population.quarantine
+            self.background.buttons[1].set(int(population.quarantine))
+            print(f'quarantine: {population.quarantine}')
 
     def set_community(self, community):
         self.community = community

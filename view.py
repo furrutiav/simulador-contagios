@@ -36,9 +36,10 @@ if __name__ == '__main__':
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     b = Builder()
-    pop1 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, 0.5))
-    pop2 = Population(b, size=100, social_distance=False, groups=2, view_center=(0.7, -0.5))
-    C = Community(pop1, pop2)
+    pop1 = Population(b, size=size1, social_distance=False, groups=2, view_center=(-0.7, 0.5), index=0)
+    pop2 = Population(b, size=size2, social_distance=False, groups=2, view_center=(0.7, 0.5), index=1)
+    QUAR = QuarantineZone(bound=0.5, view_center=(0, 0.5))
+    C = Community(pop1, pop2, QUAR)
     B = Background(C)
 
     controller.set_community(C)
