@@ -50,7 +50,7 @@ salir editor            # Key Escape
   }
 ]
 ```
-### Interfaz (Terminal)
+### Interfaz
 ...
 ```bash
 > [2] sanos: 34, infectados: 36, muertos: 13, recuperados: 17
