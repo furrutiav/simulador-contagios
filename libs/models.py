@@ -12,7 +12,7 @@ from scipy.stats import bernoulli, norm, uniform
 import json
 
 # load virus
-virus = open('virus.json')
+virus = open('libs/base_virus.json')
 data_virus = json.load(virus)[0]
 # init time
 time = 0
@@ -47,6 +47,15 @@ class Builder(object):
 
     def get_graph(self):
         return self._graph
+
+    def get_virus(self, virus_json):
+        d_virus = json.load(virus_json)[0]
+        ite = Person.iterations
+        Person.parameters['prob_inf'] = d_virus['Contagious_prob'] / ite
+        Person.parameters["radius"] = d_virus['Radius']
+        Person.parameters["death_rate"] = d_virus['Death_rate'] / ite
+        Person.parameters["days_to_heal"] = d_virus['Days_to_heal']
+        return [int(d_virus['Initial_population'] / 2) for _ in range(2)]
 
 
 class Person(object):
@@ -479,7 +488,7 @@ class Background(object):
         self.QUAR = community.QUAR
 
         back_gpu = es.toGPUShape(bs.createTextureQuad('img/back.png'), GL_REPEAT,
-                                       GL_NEAREST)
+                                 GL_NEAREST)
 
         square_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
         bound_gpu = es.toGPUShape(bs.createColorQuad(1, 1, 1))

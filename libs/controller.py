@@ -4,11 +4,9 @@ F. Urrutia V., CC3501, 2020-1
         Control con el usuario
 """
 
-from models import *
+from libs.models import *
 import glfw
-import numpy as np
 import matplotlib.pyplot as plt
-import sys
 
 
 class Controller(object):
