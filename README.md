@@ -6,7 +6,7 @@ glfw      # librería OpenGL
 pyopengl  # OpenGL para python
 numpy     # operación con vectores y matrices
 pillow    # procesamiento de imágenes
-scipy     # distribuciones de probabilidad
+scipy     # (stats) distribuciones de probabilidad
 ```
 ### Controles
 ...
