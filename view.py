@@ -23,7 +23,6 @@ if __name__ == '__main__':
     controller = Controller()
 
     glfw.set_key_callback(window, controller.on_key)
-    glfw.set_scroll_callback(window, controller.on_scroll)
 
     pipeline_tx_2d = es.SimpleTextureTransformShaderProgram()
     pipeline_pol_2d = es.SimpleTransformShaderProgram()
@@ -46,23 +45,57 @@ if __name__ == '__main__':
     controller.set_background(B)
 
     sleep(1)
+
+    M = Mask()
     while not glfw.window_should_close(window):
+
+        if controller.parameter == 'P':
+            controller.plot()
 
         glfw.poll_events()
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
         if controller.binary_value:
             C.update()
-
         else:
             controller.binary_value = not controller.binary_value
             C.update_forward()
 
         B.update()
-        C.draw(pipeline_pol_2d)
-        B.draw(pipeline_pol_2d)
+
+        if controller.mask:
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glEnable(GL_STENCIL_TEST)
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE)
+            glDepthMask(GL_FALSE)
+            glStencilFunc(GL_NEVER, 1, 0xFF)
+            glStencilOp(GL_REPLACE, GL_KEEP, GL_KEEP)
+
+            glStencilMask(0xFF)
+            glClear(GL_STENCIL_BUFFER_BIT)
+
+            M.draw(pipeline_pol_2d)
+
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE)
+            glDepthMask(GL_TRUE)
+            glStencilMask(0x00)
+            glStencilFunc(GL_EQUAL, 0, 0xFF)
+
+            C.draw(pipeline_pol_2d)
+            B.draw(pipeline_pol_2d, pipeline_tx_2d)
+
+            glStencilFunc(GL_EQUAL, 1, 0xFF)
+
+            glDisable(GL_STENCIL_TEST)
+
+        else:
+            controller.mask = True
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+            C.draw(pipeline_pol_2d)
+            B.draw(pipeline_pol_2d, pipeline_tx_2d)
 
         glfw.swap_buffers(window)
+
+
 
     glfw.terminate()

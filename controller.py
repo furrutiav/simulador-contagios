@@ -8,6 +8,7 @@ from models import *
 import glfw
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 
 class Controller(object):
@@ -17,6 +18,7 @@ class Controller(object):
         self.binary_value = True
         self.parameter = 'ESC'
         self.view = False
+        self.mask = True
 
     def on_key(self, window, key, scancode, action, mods):
         if not (action == glfw.PRESS):
@@ -41,24 +43,12 @@ class Controller(object):
             print(f'restart simulation!')
 
         if key == glfw.KEY_P:
+            self.parameter = 'P'
+            self.mask = False
             graph = self.background.graphs[0]
             pop = self.background.populations[self.background.select]
             for i, plot in enumerate(graph.plots):
                 graph.update_plot(plot, pop.count[i], list(color_dict.keys())[i], max(pop.size, 100))
-
-            fig, aux = plt.subplots(figsize=(10, 5))
-            aux.plot(pop.count[0], color='g', label='sanos')
-            aux.plot(pop.count[1], color='r', label='infectados')
-            aux.plot(pop.count[2], color='grey', label='muertos')
-            aux.plot(pop.count[3], color='b', label='recuperados')
-            aux.set_xlabel(f'Tiempo [ite: {Person.iterations} ite = 1 dia]')
-            aux.set_ylabel('Individuos [#]')
-            aux.set_ylim(0, max(pop.size, 100))
-            aux.set_title(f'Estado población #{self.background.select+1}')
-            aux.grid()
-            aux.legend()
-            plt.subplots_adjust(wspace=0, hspace=0)
-            plt.show()
 
         if key == glfw.KEY_1:
             self.background.set_select(0)
@@ -94,6 +84,9 @@ class Controller(object):
         if key == glfw.KEY_Q:
             self.parameter = 'Q'
 
+        if key == glfw.KEY_N:
+            self.parameter = 'N'
+
         if key == glfw.KEY_KP_ADD:
             if self.parameter == 'I':
                 ite = Person.iterations
@@ -123,6 +116,11 @@ class Controller(object):
             if self.parameter == 'Q':
                 days = Person.parameters['days_to_quarantine']
                 Person.parameters['days_to_quarantine'] += 1 if (14 >= days + 1) else (14 - days)
+
+            if self.parameter == 'N':
+                ite = Person.iterations
+                migration_rate = Person.parameters['migration_rate'] * ite
+                Person.parameters['migration_rate'] += 0.05 / ite if (1 >= migration_rate + 0.05) else (1-migration_rate)/ite
 
         if key == glfw.KEY_KP_SUBTRACT:
             if self.parameter == 'I':
@@ -154,6 +152,11 @@ class Controller(object):
                 days = Person.parameters['days_to_quarantine']
                 Person.parameters['days_to_quarantine'] += -1 if (days - 1 >= 0) else (0 - days)
 
+            if self.parameter == 'N':
+                ite = Person.iterations
+                migration_rate = Person.parameters['migration_rate'] * ite
+                Person.parameters['migration_rate'] += - 0.05 / ite if (migration_rate - 0.05 >= 0) else (0-migration_rate)/ite
+
         if key == glfw.KEY_V:
             pop = self.community.get_populations()[self.background.select]
             self.view = not self.view
@@ -175,14 +178,25 @@ class Controller(object):
             self.background.buttons[1].set(int(population.quarantine))
             print(f'quarantine: {population.quarantine}')
 
+    def plot(self):
+        pop = self.background.populations[self.background.select]
+        fig, aux = plt.subplots(figsize=(10, 5))
+        aux.plot(pop.count[0], color='g', label='sanos')
+        aux.plot(pop.count[1], color='r', label='infectados')
+        aux.plot(pop.count[2], color='grey', label='muertos')
+        aux.plot(pop.count[3], color='b', label='recuperados')
+        aux.set_xlabel(f'Tiempo [ite: {Person.iterations} ite = 1 dia]')
+        aux.set_ylabel('Individuos [#]')
+        aux.set_ylim(0, max(pop.size, 100))
+        aux.set_title(f'Estado población #{self.background.select + 1}')
+        aux.grid()
+        aux.legend()
+        plt.subplots_adjust(wspace=0, hspace=0)
+        plt.show()
+        self.parameter = 'ESC'
+
     def set_community(self, community):
         self.community = community
 
     def set_background(self, background):
         self.background = background
-
-    def on_scroll(self, window, pos, action):
-        ite = Person.iterations
-        prob = Person.parameters["prob_inf"] * ite
-        Person.parameters["prob_inf"] += action * 0.1/ite if (1 >= prob + action * 0.1 >= 0) else 0
-        print(Person.parameters["prob_inf"] * ite)

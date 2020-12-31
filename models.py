@@ -478,8 +478,15 @@ class Background(object):
         self.populations = community.get_populations()
         self.QUAR = community.QUAR
 
+        back_gpu = es.toGPUShape(bs.createTextureQuad('img/back.png'), GL_REPEAT,
+                                       GL_NEAREST)
+
         square_gpu = es.toGPUShape(bs.createColorQuad(0.05, 0.07, 0.11))
         bound_gpu = es.toGPUShape(bs.createColorQuad(1, 1, 1))
+
+        back = sg.SceneGraphNode('back')
+        back.transform = tr.uniformScale(2)
+        back.childs += [back_gpu]
 
         pop1 = self.populations[0]
         view_center1 = pop1.view_center[0], pop1.view_center[1], 0
@@ -531,28 +538,37 @@ class Background(object):
 
         self.model = squares
 
+        self.model_tx = back
+
         self.model_static = None
         self.model_dynamic = None
 
+        x_info = -0.29
+        y_info = 0.33
         for i, c in enumerate(list(color_dict.keys())[:4]):
-            self.set_percent_bar(color=c, center=(0.318, (2-i) * 0.05 + 0.025 + 0.75))
+            self.set_percent_bar(color=c, center=(x_info, (2-i) * 0.2 + y_info))
 
         self.set_percent_bar(color='w', center=(0, 0.88))
 
-        x_settings = 0.318
-        y_settings = -0.5
+        x_settings = 0.35
+        y_settings = -0.255
         for i, c in enumerate(['r', 'y', 'grey', 'b']):
-            self.set_percent_bar(color=c, center=(x_settings, y_settings-0.05*i))
+            self.set_percent_bar(color=c, center=(x_settings, y_settings-0.2*i))
 
-        self.set_button(active=0, center=(0.318, 0.5))
+        x_gob = 0.29
+        y_gob = 0.75
 
-        self.set_percent_bar(color='cian', center=(0.318, 0.5 - 0.1))
+        self.set_button(active=0, center=(x_gob, y_gob))
 
-        self.set_button(color='r', active=0, center=(0.318, 0.5-0.2))
+        self.set_percent_bar(color='cian', center=(x_gob, y_gob - 0.1))
 
-        self.set_percent_bar(color='r', center=(0.318, 0.5 - 0.3))
+        self.set_button(color='r', active=0, center=(x_gob, y_gob-0.2))
 
-        self.set_button(color='y', center=(0.318, 0.5 - 0.4))
+        self.set_percent_bar(color='r', center=(x_gob, y_gob - 0.3))
+
+        self.set_button(color='y', center=(x_gob, y_gob - 0.4))
+
+        self.set_percent_bar(color='y', center=(x_gob, y_gob - 0.5))
 
         self.set_graph(size=(1.0, 0.4), center=(-0.4, -0.5))
 
@@ -561,9 +577,12 @@ class Background(object):
         self.graphs[0].plot([], 'grey')
         self.graphs[0].plot([], 'b')
 
-    def draw(self, pipeline):
+    def draw(self, pipeline, pipeline_tx):
         glUseProgram(pipeline.shaderProgram)
         sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
+
+        glUseProgram(pipeline_tx.shaderProgram)
+        sg.drawSceneGraphNode(self.model_tx, pipeline_tx, transformName='transform')
 
     def set_percent_bar(self, value=0, size=(0.5, 0.05), center=(0, 0), color='g'):
         pB = PercentBar(value, size, center, color)
@@ -595,6 +614,8 @@ class Background(object):
         self.bars[9].set(Person.parameters['ratio_social_distance'])
 
         self.bars[10].set(Person.parameters['days_to_quarantine']/14)
+
+        self.bars[11].set(Person.parameters['migration_rate'] * ite)
 
         pop.show_data(self.select+1)
 
@@ -767,6 +788,29 @@ class GraphMath(object):
             ])
             subline.childs += [self.line_gpu_dict[color]]
             plot.childs += [subline]
+
+
+class Mask(object):
+    def __init__(self):
+        gpu = es.toGPUShape(bs.createColorQuad(1, 1, 1))
+
+        square = sg.SceneGraphNode('square')
+        square.transform = tr.matmul([
+            tr.translate(-0.4, -0.5, 0),
+            tr.scale(1.0, 0.4, 1),
+            tr.uniformScale(2),
+            tr.scale(1/aspect_ratio, 1, 1)
+        ])
+        square.childs += [gpu]
+
+        mask = sg.SceneGraphNode('mask')
+        mask.childs += [square]
+
+        self.model = mask
+
+    def draw(self, pipeline):
+        glUseProgram(pipeline.shaderProgram)
+        sg.drawSceneGraphNode(self.model, pipeline, transformName='transform')
 
 
 def get_dif(vec1, vec2):
