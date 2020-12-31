@@ -451,7 +451,7 @@ class Community(object):
 
 
 class QuarantineZone(object):
-    def __init__(self, bound, view_center=(0, 0)):
+    def __init__(self, bound=0.5, view_center=(0, 0.5)):
         self.view_center = view_center
         self.bound = bound
 

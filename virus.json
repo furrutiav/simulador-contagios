@@ -1,9 +1,9 @@
 [
   {
     "Radius": 0.2,
-    "Contagious_prob": 0.2,
-    "Death_rate": 0.1,
-    "Initial_population": 100,
-    "Days_to_heal": 5
+    "Contagious_prob": 0.8,
+    "Death_rate": 0.5,
+    "Initial_population": 150,
+    "Days_to_heal": 7
   }
 ]
