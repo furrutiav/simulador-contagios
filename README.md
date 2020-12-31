@@ -34,6 +34,11 @@ salir editor            # Key Escape
 ```
 ### Inicio
 ...
+
+```sh
+> python view.py virus.json
+```
+
 ```python
 [
   {
