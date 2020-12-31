@@ -46,7 +46,6 @@ if __name__ == '__main__':
     controller.set_background(B)
 
     sleep(1)
-
     while not glfw.window_should_close(window):
 
         glfw.poll_events()
@@ -54,9 +53,7 @@ if __name__ == '__main__':
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         if controller.binary_value:
-            C.update(controller.pause)
-            if controller.pause:
-                controller.pause = not controller.pause
+            C.update()
 
         else:
             controller.binary_value = not controller.binary_value

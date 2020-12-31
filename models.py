@@ -9,7 +9,6 @@ import numpy as np
 from OpenGL.GL import *
 import random as rd
 from scipy.stats import bernoulli, norm, uniform
-from typing import Union, List, Any
 import json
 
 # load virus
@@ -17,6 +16,7 @@ virus = open('virus.json')
 data_virus = json.load(virus)[0]
 # init time
 time = 0
+pause = False
 
 color_dict = {'g': (0, 1, 0), 'r': (1, 0, 0), 'grey': (0.4, 0.4, 0.4),
               'b': (0, 0, 1), 'w': (1, 1, 1), 'y': (1, 1, 0), 'cian': (0, 1, 1)}
@@ -60,6 +60,7 @@ class Person(object):
         "days_to_heal": data_virus['Days_to_heal'],
         "ratio_social_distance": 0.5,
         "days_to_quarantine": 1,
+        "migration_rate": 1 / iterations
 
     }
 
@@ -189,6 +190,9 @@ class Person(object):
         self.social_distance = bernoulli.rvs(self.parameters["ratio_social_distance"])
 
     def from_move_to(self, pop_out, pop_in, status):
+
+        self.population_index = (self.population_index + 1) % 2
+
         if status == 'p':
             pop_out.size += -1
             pop_in.size += 1
@@ -227,13 +231,14 @@ class Person(object):
 
 class Population(object):
 
-    def __init__(self, builder, size, social_distance=False, quarantine=False, groups=1, view_center=(0, 0), index=0):
+    def __init__(self, builder, size, social_distance=False, quarantine=False, migration=False, groups=1, view_center=(0, 0), index=0):
         self.builder = builder
         self.groups = groups
         self.size = size
         self.social_distance = social_distance
         self.view_center = view_center
         self.quarantine = quarantine
+        self.migration = migration
 
         root = sg.SceneGraphNode('root')
         root.transform = tr.matmul([
@@ -326,7 +331,12 @@ class Population(object):
         for index, people in enumerate([self.s_people, self.i_people, self.d_people, self.r_people]):
             self.count[index].append(len(people))
 
-    def update(self, community, pause=False):
+    def update(self, community):
+        global pause
+        if self.migration and bernoulli.rvs(Person.parameters['migration_rate']):
+            pause = True
+            pop_ = list(set(community.get_populations())-{self})[0]
+            self.rand_move(pop_)
         if not pause:
             self.update_grid_smart(community=community)
 
@@ -384,7 +394,8 @@ class Population(object):
         person.from_move_to(self, pop, status)
 
     def rand_move(self, pop):
-        person = rd.choice(self.people)
+        list_choice = list(set(self.people) - set(self.q_people))
+        person = rd.choice(list_choice)
         self.move_to(person, pop, 'p')
 
     def rand_quar_move(self, quar):
@@ -403,11 +414,15 @@ class Community(object):
         self.pop2 = pop2
         self.QUAR = quar
 
-    def update(self, pause):
-        global time
+    def update(self):
+        global time, pause
         for _, pop in enumerate([self.pop1, self.pop2]):
-            pop.update(self, pause)
+            pop.update(self)
         self.QUAR.update()
+
+        if pause:
+            pause = not pause
+
         time += 1
 
     def update_forward(self):
@@ -537,6 +552,8 @@ class Background(object):
 
         self.set_percent_bar(color='r', center=(0.318, 0.5 - 0.3))
 
+        self.set_button(color='y', center=(0.318, 0.5 - 0.4))
+
         self.set_graph(size=(1.0, 0.4), center=(-0.4, -0.5))
 
         self.graphs[0].plot([], 'g')
@@ -559,6 +576,7 @@ class Background(object):
         self.model.childs += [b.get()]
 
     def update(self):
+        global pause
         pop = self.populations[self.select]
         for i, b in enumerate(self.bars[:4]):
             b.set(pop.count[i][-1] / pop.size)

@@ -17,7 +17,6 @@ class Controller(object):
         self.binary_value = True
         self.parameter = 'ESC'
         self.view = False
-        self.pause = False
 
     def on_key(self, window, key, scancode, action, mods):
         if not (action == glfw.PRESS):
@@ -66,6 +65,7 @@ class Controller(object):
             population = self.community.get_populations()[self.background.select]
             self.background.buttons[0].set(int(population.social_distance))
             self.background.buttons[1].set(int(population.quarantine))
+            self.background.buttons[2].set(int(population.migration))
             print('select #1')
 
         if key == glfw.KEY_2:
@@ -73,6 +73,7 @@ class Controller(object):
             population = self.community.get_populations()[self.background.select]
             self.background.buttons[0].set(int(population.social_distance))
             self.background.buttons[1].set(int(population.quarantine))
+            self.background.buttons[2].set(int(population.migration))
             print('select #2')
 
         if key == glfw.KEY_I:
@@ -163,11 +164,10 @@ class Controller(object):
             self.parameter = 'ESC'
 
         if key == glfw.KEY_M:
-            self.pause = True
-            s = self.background.select
-            pop = self.community.get_populations()[s]
-            pop_ = self.community.get_populations()[(s+1) % 2]
-            pop.rand_move(pop_)
+            population = self.community.get_populations()[self.background.select]
+            population.migration = not population.migration
+            self.background.buttons[2].set(int(population.migration))
+            print(f'migration: {population.migration}')
 
         if key == glfw.KEY_C:
             population = self.community.get_populations()[self.background.select]
