@@ -1,37 +1,44 @@
 # simulador-contagios 🚧
 ### Pre-requisitos
-Para comenzar es necesario pre-instalar las siguientes librerias para python: [glfw](https://pypi.org/project/glfw/), [pyopengl](https://pypi.org/project/PyOpenGL/), [numpy](https://pypi.org/project/numpy/), [pillow](https://pypi.org/project/Pillow/), [scipy](https://pypi.org/project/scipy/)
+Para comenzar es necesario pre-instalar las siguientes librerias para python: [glfw](https://pypi.org/project/glfw/), [pyopengl](https://pypi.org/project/PyOpenGL/), [numpy](https://pypi.org/project/numpy/), [pillow](https://pypi.org/project/Pillow/), [scipy](https://pypi.org/project/scipy/), [matplotlib](https://pypi.org/project/matplotlib/)
 ```bash
-glfw      # librería OpenGL
-pyopengl  # OpenGL para python
-numpy     # operación con vectores y matrices
-pillow    # procesamiento de imágenes
-scipy     # distribuciones de probabilidad
+glfw        # librería OpenGL
+pyopengl    # OpenGL para python
+numpy       # operación con vectores y matrices
+pillow      # procesamiento de imágenes
+scipy       # (stats) distribuciones de probabilidad
+matplotlib  # graficos
 ```
 ### Controles
 ...
 ```bash
-distancia social    # Key S
-migrar random       # Key M
-avanzar un dia      # Key Right
-restart simulation  # Key X
-info                # Key P
-cuarentena          # Key C
+distancia social        # Key S
+migrar random           # Key M
+avanzar un dia          # Key Right
+reiniciar simulación    # Key X
+plot/terminar           # Key P
+cuarentena              # Key C
 vista distancia social  # Key V
-seleccion           # Press Key 1 or 2
+seleccion               # Key 1 or 2
 
-prob infeccion      # set Key I
-radius              # set Key R
-death rate          # set Key D
-days to heal        # set Key H
-ratio social distance # set Key A
-days to quarantine  # set Key Q
+prob. infeccion         # set Key I
+radio contagio          # set Key R
+prob. muerte            # set Key D
+dias para recuperarse   # set Key H
+prob. distancia social  # set Key A
+dias para cuarentena    # set Key Q
 
-aumentar            # Key +
-disminuir           # Key -
+aumentar                # Key +
+disminuir               # Key -
+salir editor            # Key Escape
 ```
 ### Inicio
 ...
+
+```sh
+> python view.py virus.json
+```
+
 ```python
 [
   {
@@ -51,10 +58,10 @@ disminuir           # Key -
 ### Estados
 ...
 ```bash
-sano        # verde
-infectado   # rojo
-muerto      # gris
-recuperado  # azul
+sano                  # verde
+infectado             # rojo
+muerto                # gris
+recuperado            # azul
 
 CON distancia social  # cian
 SIN distancia social  # amarillo
