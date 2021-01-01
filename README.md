@@ -11,12 +11,12 @@ scipy       # (stats) distribuciones de probabilidad
 matplotlib  # graficos
 ```
 ### Inicio
-...
+Para iniciar, es necesario introducir como argumento adicional (al llamado del simulador view.py) un archivo virus.json que contiene los parametros de un virus a simular. Esto es:
 
 ```sh
 > python view.py virus.json
 ```
-
+Un ejemplo del contenido de virus.json se define como sigue:
 ```python
 [
   {
@@ -27,6 +27,14 @@ matplotlib  # graficos
     "Days_to_heal": 5
   }
 ]
+```
+Ahora bien, cada parametro posee cotas y tipos de variables, estas son:
+```python
+0 <= "Radius"(float) <= 0.2
+0 <= "Contagious_prob"(float) <= 1
+0 <= "Death_rate"(float) <= 1
+0 <= "Initial_population"(int) <= 300
+0 <= "Days_to_heal"(int) <= 14
 ```
 ### Controles y Funcionamiento
 ...
