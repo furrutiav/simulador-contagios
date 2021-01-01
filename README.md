@@ -28,6 +28,8 @@ Un ejemplo del contenido de virus.json se define como sigue:
   }
 ]
 ```
+donde "Radius" es el radio de contagio, "Contagious_prob" la probabilidad de contagio cuando existe interaccion a distancia menor que "Radius", "Death_rate" probabilidad de muerte por infeccion, "Initial_population" poblacion total inicial (para un desempeño fluido se recomienda menor o igual 200) y "Days_to_heal" dias necesarios para recuperarse de la infeccion.
+
 Ahora bien, cada parametro posee cotas y tipos de variables, estas son:
 ```python
 0 <= "Radius"(float) <= 0.2
