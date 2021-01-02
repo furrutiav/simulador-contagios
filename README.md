@@ -1,6 +1,6 @@
 # simulador-contagios 🚧
 Proyecto personal, utilizando OpenGL para python 3, de un simulador de contagios entre dos poblaciones con aplicacion de medidas preventivas (cuarentena, distancia social y/o cierre de fronteras) en tiempo real a partir de un virus modificable (probabilidad de infeccion y muerte, radio de contagio, dias de recuperacion, etc.) durante la simulacion.
-### Pre-requisitos
+## Pre-requisitos
 Para comenzar es necesario pre-instalar las siguientes librerias para python: [glfw](https://pypi.org/project/glfw/), [pyopengl](https://pypi.org/project/PyOpenGL/), [numpy](https://pypi.org/project/numpy/), [pillow](https://pypi.org/project/Pillow/), [scipy](https://pypi.org/project/scipy/), [matplotlib](https://pypi.org/project/matplotlib/)
 ```bash
 glfw        # librería OpenGL
@@ -10,7 +10,7 @@ pillow      # procesamiento de imágenes
 scipy       # (stats) distribuciones de probabilidad
 matplotlib  # graficos
 ```
-### Inicio
+## Inicio
 Para iniciar, es necesario introducir como argumento adicional (al llamado del simulador view.py) la ruta de un archivo .json que contiene los parametros de un virus a simular. Esto es:
 ```sh
 > python view.py ruta
@@ -39,28 +39,63 @@ Ahora bien, cada parametro posee cotas y tipos de variables, estas son:
 0 <= "Initial_population"(int) <= 300
 0 <= "Days_to_heal"(int) <= 14
 ```
-### Controles y Funcionamiento
-...
+## Controles y Funcionamiento
+Para la activacion de parametros basta presionar la tecla correspondiente de activacion y para modificar los valores de los parametros es necesario presionar la tecla correspondiente de modificacion donde con tecla + para aumentar el valor, - para disminuir y Escape para deseleccionar la modificacion:
 ```bash
-distancia social        # Key S
-migrar random           # Key M
-avanzar un dia          # Key Right
-reiniciar simulación    # Key X
-plot/terminar           # Key P
-cuarentena              # Key C
-vista distancia social  # Key V
-seleccion               # Key 1 or 2
-
-prob. infeccion         # set Key I
-radio contagio          # set Key R
-prob. muerte            # set Key D
-dias para recuperarse   # set Key H
-prob. distancia social  # set Key A
-dias para cuarentena    # set Key Q
-
 aumentar                # Key +
 disminuir               # Key -
 salir editor            # Key Escape
+```
+El mecanismo de la simulacion se define por tres bloques de parametros modificables: medidas preventivas, valores del virus y extras. Definidos como siguen:
+### Medidas Preventivas
+Para este modelo de simulacion se eligen como medidas clave la aplicacion de la distancia social, cuarentena y cierre de fronteras.
+
+Primero, una distancia social corresponde al distanciamiento indiviudal del resto de individuos cuando se decide ser aplicada, donde ademas existe una probabilidad de responsabilidad individual por ser aplicada. Ademas, la distancia social queda definida por el radio de contagio de tal forma que su aplicacion impida el contagio. Con esto, para la activacion de distancia social hay que usar tecla S y modificacion de probabilidad la tecla A. Ademas se considerar un modo que visualiza quien realiza la distancia con tecla V.
+```bash
+distancia social        # Key S
+prob. distancia social  # set Key A
+vista distancia social  # Key V
+```
+Segundo, una cuarentena corresponde al aislamiento social de personas contagiadas cuando se decide ser aplicada, donde en general dicha medida se gestiona con un examen que determina si un individuo esta contagiado, entonces dicha aplicacion posee una cantidad de dias de aplicacion indiviudal desde el dia en que se contagio el individuo. Con esto, para la activacion de cuarentena hay que usar tecla C y modificacion de dias de aplicacion individual la tecla Q.
+```bash
+cuarentena              # Key C
+dias para cuarentena    # set Key Q
+```
+Tercero, un cierre de fronteras corresponde al aislamiento de una poblacion de otras cuando se decide ser aplicada, donde un libre desplazamiento de indiviudos entre poblaciones con cierta probabilidad provoca reinfeccion de una poblacion pese a no tener casos activos. Con esto, por defecto una poblacion tendra denegado el libre transito entre poblaciones, donde para la activacion hay que usar tecla M y modificacion de la probabilidad de transito (un individuo cambia de poblacion) con tecla N.
+```bash
+migrar random           # Key M
+prob. migrar            # set Key N
+```
+Es importante notar que la aplicacion de las medidas se realizan de manera separada de acuerdo a la poblacion seleccionada. Para elegir una poblacion basta presionar 1 o 2 segun corresponda.
+```bash
+poblacion 1             # Key 1
+poblacion 2             # Key 2
+```
+### Valores del Virus
+Para este modelo de simulacion se consideran como parametros modificables clave la probabilidad de infeccion, radio de contagio, probabilidad de muerte por infeccion y dias para recuperarse.
+
+Primero, la probabilidad de contagio esta definida como la probabilidad que tiene un individuo sano de contagiarse cuando un individuo infectado esta a distancia menor o igual al radio de contagio relacionada por cuanto es de infeccioso el virus. Con esto, para modificar tal probabilidad hay que usar tecla I.
+```bash
+prob. infeccion         # set Key I
+```
+Segundo, el radio de contagio corresponde a la distancia suficiente para que un individuo sano pueda ser contagiado por un infectado. Asi, para modificar dicho radio hay que usar tecla R.
+```bash
+radio contagio          # set Key R
+```
+Tercero, la probabilidad de muerte por infeccion esta definida como la probabilidad que tiene un individuo infectado de morir por el virus relacionada con la letalidad del virus. Con esto, para modificar hay que usar tecla D.
+```bash
+prob. muerte            # set Key D
+```
+Cuarto, dias para recuperarse corresponde a la cantidad de dias suficientes para que un individuo infectado pueda recuperarse del virus. Asi, para modificar la cantidad de dias hay que usar tecla H.
+```bash
+dias para recuperarse   # set Key H
+```
+### Extras
+Finalmente, se considerar la posibilidad de adelantar un dia desde el tiempo actual con tecla derecha, reiniciar la simulacion de la poblacion seleccionada con tecla X y graficar el comportamiento de la simulacion por poblacion con tecla P.
+```bash
+avanzar un dia          # Key Right
+reiniciar simulación    # Key X
+terminar/plot           # Key P
 ```
 ### Interfaz
 ...
