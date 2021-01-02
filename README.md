@@ -104,6 +104,7 @@ Cuarto, dias para recuperarse corresponde a la cantidad de dias suficientes para
 ```bash
 dias para recuperarse   # set Key H
 ```
+Es importante notar la modificacion de los valores del virus son independientes de la poblacion selecciondado, por lo que el nuevo desempeño del virus se aplica sobre el conjunto de poblaciones.
 ### Globales
 Finalmente, se considerar la posibilidad de adelantar un dia desde el tiempo actual con tecla derecha, reiniciar la simulacion de la poblacion seleccionada con tecla X y graficar el comportamiento de la simulacion por poblacion con tecla P.
 ```bash
