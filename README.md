@@ -39,6 +39,20 @@ Ahora bien, cada parametro posee cotas y tipos de variables, estas son:
 0 <= "Initial_population"(int) <= 300
 0 <= "Days_to_heal"(int) <= 14
 ```
+## Logica
+...
+### Estados
+...
+```bash
+sano                  # verde
+infectado             # rojo
+muerto                # gris
+recuperado            # azul
+
+CON distancia social  # cian
+SIN distancia social  # amarillo
+```
+
 ## Controles y Funcionamiento
 Para la activacion de parametros basta presionar la tecla correspondiente de activacion y para modificar los valores de los parametros es necesario presionar la tecla correspondiente de modificacion donde con tecla + para aumentar el valor, - para disminuir y Escape para deseleccionar la modificacion:
 ```bash
@@ -46,7 +60,7 @@ aumentar                # Key +
 disminuir               # Key -
 salir editor            # Key Escape
 ```
-El mecanismo de la simulacion se define por tres bloques de parametros modificables: medidas preventivas, valores del virus y extras. Definidos como siguen:
+El mecanismo de la simulacion se define por tres bloques de parametros modificables: medidas preventivas, valores del virus y globales. Definidos como siguen:
 ### Medidas Preventivas
 Para este modelo de simulacion se eligen como medidas clave la aplicacion de la distancia social, cuarentena y cierre de fronteras.
 
@@ -90,27 +104,16 @@ Cuarto, dias para recuperarse corresponde a la cantidad de dias suficientes para
 ```bash
 dias para recuperarse   # set Key H
 ```
-### Extras
+### Globales
 Finalmente, se considerar la posibilidad de adelantar un dia desde el tiempo actual con tecla derecha, reiniciar la simulacion de la poblacion seleccionada con tecla X y graficar el comportamiento de la simulacion por poblacion con tecla P.
 ```bash
 avanzar un dia          # Key Right
 reiniciar simulación    # Key X
 terminar/plot           # Key P
 ```
-### Interfaz
+## Interfaz
 ...
 ```bash
 > [2] sanos: 34, infectados: 36, muertos: 13, recuperados: 17
 ```
 ![alt text](/img/example.png)
-### Estados
-...
-```bash
-sano                  # verde
-infectado             # rojo
-muerto                # gris
-recuperado            # azul
-
-CON distancia social  # cian
-SIN distancia social  # amarillo
-```
