@@ -11,11 +11,12 @@ scipy       # (stats) distribuciones de probabilidad
 matplotlib  # graficos
 ```
 ### Inicio
-Para iniciar, es necesario introducir como argumento adicional (al llamado del simulador view.py) un archivo virus.json que contiene los parametros de un virus a simular. Esto es:
-
+Para iniciar, es necesario introducir como argumento adicional (al llamado del simulador view.py) la ruta de un archivo .json que contiene los parametros de un virus a simular. Esto es:
 ```sh
-> python view.py virus.json
+> python view.py ruta
 ```
+por comondidad se recomienda usar ruta=virus.json y modificar dicho archivo con los valores deseados.
+
 Un ejemplo del contenido de virus.json se define como sigue:
 ```python
 [
