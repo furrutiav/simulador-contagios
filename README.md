@@ -128,4 +128,4 @@ Finalmente, en la parte inferior derecha junto al rectángulo donde se dibuja el
 ```bash
 > [2] sanos: 34, infectados: 36, muertos: 13, recuperados: 17
 ```
-![alt text](/img/example.png)
+![/img/example.png](/img/example.png)
