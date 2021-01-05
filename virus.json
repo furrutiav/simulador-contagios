@@ -1,7 +1,7 @@
 [
   {
-    "Radius": 0.2,
-    "Contagious_prob": 0.8,
+    "Radius": 0.1,
+    "Contagious_prob": 0.5,
     "Death_rate": 0.5,
     "Initial_population": 150,
     "Days_to_heal": 7
