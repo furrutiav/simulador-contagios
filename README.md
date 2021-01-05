@@ -128,4 +128,4 @@ Finalmente, en la parte inferior derecha junto al rectángulo donde se dibuja el
 ```bash
 > [2] sanos: 34, infectados: 36, muertos: 13, recuperados: 17
 ```
-![/img/example.png](/img/example.png)
+![https://github.com/furrutiav/simulador-contagios/blob/main/img/example.png](/img/example.png)
