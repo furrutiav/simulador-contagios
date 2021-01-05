@@ -1,6 +1,6 @@
 # simulador-contagios
 Proyecto personal, utilizando OpenGL para python 3, de un simulador de contagios entre dos poblaciones con aplicación de medidas preventivas (cuarentena, distancia social y/o cierre de fronteras) en tiempo real a partir de un virus modificable (probabilidad de infección y muerte, radio de contagio, dias de recuperacion, etc.) durante la simulación.
-### Identifiación del Documento
+### Identificación del Documento
 ```bash
 Curso: CC3501 - Primavera 2020, Fecha: 04/01/2021, Alumno: Felipe Urrutia Vargas
 ```
