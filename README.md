@@ -40,9 +40,10 @@ Ahora bien, cada parámetro posee cotas y tipos de variables, estas son:
 0 <= "Days_to_heal"(int) <= 14
 ```
 ## Lógica
-...
+Se basa en el conjunto de dos poblaciones que conforman un sistema comunicado. Cada poblacion tiene un comportamiento alejado de la otra, donde en algunos casos se puede considerar un grado de comunicacion, como los viajes entre poblaciones de individuos (autos, aviones o barcos). En general, por cuanto es de infeccioso un virus se considera una zona de cuarentena o aislacion de casos activos (infectados) para asi prevenir nuevos contagios. Ahora bien, dado este sistema general cada individuo de la poblacion distribuye con estados, esto es:
+
 ### Estados
-...
+Esta simulacion se basa en un sistema de individuos con estado variable. El estado por defecto de un individuo es "sano" (saludable o no infectado). En el contexto de un virus podemos considerar un porcentaje (o caso cero) de la poblacion que esta infectada con el virus a simular, con esto se considera el estado "infectado" (contagiado). Una de las caracteristicas de un virus es su capacidad de contagio o cuan infeccioso es el virus, y de un radio para el cual la probabilidad de contagio es suficiente para infectar a un individuo sano. Ademas un virus posee letalidad relacionada por cuanto es de mortal el virus para un individuo que lo posee considerando un nuevo estado "muerto", en algunos casos el mismo individuo tiene la capacidad de recuperarse (o ser tratado) dependiendo del virus con estado "recuperado". Por simplicidad se supone sin perdida de generalidad que un individuo recuperado no puede volver a infectarse ni infectar a otros.
 ```bash
 sano                  # verde
 infectado             # rojo
