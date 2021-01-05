@@ -1,4 +1,4 @@
-# simulador-contagios 🚧
+# simulador-contagios
 Proyecto personal, utilizando OpenGL para python 3, de un simulador de contagios entre dos poblaciones con aplicación de medidas preventivas (cuarentena, distancia social y/o cierre de fronteras) en tiempo real a partir de un virus modificable (probabilidad de infección y muerte, radio de contagio, dias de recuperacion, etc.) durante la simulación.
 ## Pre-requisitos
 Para comenzar es necesario pre-instalar las siguientes librerias para python: [glfw](https://pypi.org/project/glfw/), [pyopengl](https://pypi.org/project/PyOpenGL/), [numpy](https://pypi.org/project/numpy/), [pillow](https://pypi.org/project/Pillow/), [scipy](https://pypi.org/project/scipy/), [matplotlib](https://pypi.org/project/matplotlib/)
@@ -114,7 +114,13 @@ reiniciar simulación    # Key X
 terminar/plot           # Key P
 ```
 ## Interfaz
-...
+La simulacion posee una interfaz sencilla y guiada de visulizacion y contol (editor).
+### Visualizacion
+Se compone de dos escenas principales cuadradas con borde celeste donde en cada extremo de la pantalla con un conjunto de puntos verde y rojo que conforman cada poblacion ya definidas (#1 izquierda y #2 derecha). Ademas, entre ellas existe una tercera escena cuadrada con borde rojo que representa la zona de cuarentena la cual ya se definio como ser activada. Luego, existe un rectangulo grande en extremos inferior izquierdo donde se dibuja un grafico de linea con OpenGL del comportamiento hasta el momento de la poblacion seleccionada la cual ya se explico como activar.
+
+Ademas, en la parte izquierda junto al cuadrado de la poblacion #1 existen cuatro graficos desde barra que representan la distribucion de individuos por estado para la poblacion seleccionada, esto es "sano", "infectado", "muerto" y "recuperado", respectivamente de arriba hacia abajo. Asi mismo, en la parte derecha junto al cuadrado de la poblacion #2 estan el conjunto de graficos de barras modificables junto al indicador de activacion para los parametros "distancia social", "cuarentena" y "migracion (viajes)", respectivamente desde arriba hacia abajo. Es facil notar que en la parte central superior existe una barra que representa el tiempo, el cual avanza hacia la derecha como una barra blanca que al completarse representa un dia (50 iteraciones).
+
+Finalmente, en la parte inferior derecha junto al rectangulo donde se dibuja el grafico señalado se ubican los parametros que modifican el virus, esto es "prob. infeccion", "radio de contagio", "prob. muerte" y "dias de recuperacion", respectivamente de arriba hacia abajo. Junto a ellos hay un conjunto de indicaciones adicinales con teclas "+: aumentar", "-:disimuir", "P:terminar/plot", "V: vista distancia social", "X: reiniciar simulacion"(por poblacion) y "Esc: salir editor", en general sobre cada parametro modificable viene acompañada un tecla que referencia lo detallado anteriormente en el modulo "Controles". 
 ```bash
 > [2] sanos: 34, infectados: 36, muertos: 13, recuperados: 17
 ```
